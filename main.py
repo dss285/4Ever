@@ -2,14 +2,11 @@
 import discord
 import asyncio
 import commands
+import config
 from classes import utilities,image,database,main,voicePlayer
 client = discord.Client()
 voiceplayers = []
-host = ""
-username = ""
-password = ""
-databasename = ""
-functions = main.Main(host,username,password,databasename)
+functions = main.Main(config.host,config.username,config.password,config.databasename)
 
 
 @client.event
@@ -30,5 +27,5 @@ async def on_ready():
 @client.event
 async def on_message(message):
 	await commands.commandRead(message, client,'!',functions ,functions.db, voiceplayers)
-client.run('BOT TOKEN')
+client.run(config.bot_token)
 
