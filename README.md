@@ -1,13 +1,7 @@
 # 4Ever
-MySQL Tables used:
+MySQL Table(s) used:
 ```
-+------------+------------+------+-----+---------+----------------+
-| Field      | Type       | Null | Key | Default | Extra          |
-+------------+------------+------+-----+---------+----------------+
-| id         | int(11)    | NO   | PRI | NULL    | auto_increment |
-| channel_id | bigint(20) | YES  |     | NULL    |                |
-| serverid   | bigint(20) | YES  |     | NULL    |                |
-+------------+------------+------+-----+---------+----------------+
+TABLE NAME: server
 
 +------------+------------+------+-----+---------+----------------+
 | Field      | Type       | Null | Key | Default | Extra          |
