@@ -11,12 +11,10 @@ functions = main.Main(config.host,config.username,config.password,config.databas
 
 @client.event
 async def on_ready():
-	nsfwchannels = functions.db.updateDics("nsfw")
 	servers = functions.db.updateDics("server")
-	functions.insertInto(nsfwchannels,servers)
+	functions.insertInto(servers)
 	await client.change_presence(game=discord.Game(name='!help for help'))
 	print(discord.__version__)
-	print(nsfwchannels)
 	print(servers)
 	for i in client.servers:
 		print(i.name)

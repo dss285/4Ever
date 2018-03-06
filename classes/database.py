@@ -2,7 +2,6 @@ import MySQLdb
 class Database:
 	def __init__(self,host,user,passwd,dbn):
 		self.conn = self.conn(host, user, passwd, dbn)
-		self.nsfwchannels = []
 		self.adminRole = []
 	def conn(self, host, user, passwd, dbn):
 		conn = MySQLdb.connect(host=host,user=user,passwd=passwd,db=dbn)
@@ -19,12 +18,6 @@ class Database:
 		c.close()
 	def updateDics(self,which):
 		c = self.conn.cursor()
-		if which.startswith('nsfw'):
-			c.execute("""SELECT * FROM nsfwchannels""");
-			for row in c.fetchall():
-				self.nsfwchannels.append([row[1],row[2]])
-			else:
-				return self.nsfwchannels
 		if which.startswith('server'):
 			c.execute("""SELECT * FROM server""");
 			for row in c.fetchall():

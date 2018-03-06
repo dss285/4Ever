@@ -26,7 +26,6 @@ async def commandRead(message, client, key, functions, conn, voiceplayers, util=
 		
 			:gear:** Commands**
 			!help - This panel
-			!google keywords - Google search
 			
 			:frame_photo:** Image Manipulation**
 			!resize width height url - Resizes image to wanted sizes
@@ -35,11 +34,7 @@ async def commandRead(message, client, key, functions, conn, voiceplayers, util=
 
 			:musical_note:** Voice Related**
 			!play (URL) - Plays youtube URL
-			
-			
-			:peach:** NSFW Related**
-			!rule34 - Rule34 API Search
-			!real - Realbooru API Search
+
 			"""
 		await client.send_message(message.channel,helpdesc)
 	if util.CommandPreTest(message,'sounds',key):
@@ -97,35 +92,6 @@ async def commandRead(message, client, key, functions, conn, voiceplayers, util=
 					print(amountsOfDel)
 					deleted = await client.purge_from(message.channel, limit=amountsOfDel+1)
 					break;
-	if util.CommandPreTest(message,'nsfw',key):
-		functions.nsfwchannel(message, client,key)
-#############################################NSFW##################################################
-	if util.CommandPreTest(message,'rule34',key):
-		for i in functions.nsfwchannels:
-			var = i
-			if int(message.channel.id) in var:
-				tags = message.content[len(key+'rule34'):].strip()
-				tags = tags.replace(' ', '+')
-				url = "https://rule34.xxx/index.php?page=dapi&s=post&q=index&limit=100&tags="+tags
-				req = urllib.request.urlopen(url)
-				parse = ET.parse(req)
-				list = [el.attrib.get('file_url') for el in parse.findall('.//post')]
-				link = random.choice(list)
-				print(link)
-
-				await client.send_message(message.channel, link)
-	if util.CommandPreTest(message,'real',key):
-		for i in functions.nsfwchannels:
-			var = i
-			if int(message.channel.id) in var:
-				tags = message.content[len(key+'real'):].strip()
-				tags = tags.replace(' ', '+')
-				url = "https://realbooru.com/index.php?page=dapi&s=post&q=index&limit=100&tags="+tags
-				req = urllib.request.urlopen(url)
-				parse = ET.parse(req)
-				list = [el.attrib.get('file_url') for el in parse.findall('.//post')]
-				link = random.choice(list)
-				await client.send_message(message.channel, link)
 #############################################VOICE##################################################
 	for i in voiceplayers:
 		if i.server == message.server.id:
@@ -157,30 +123,9 @@ async def commandRead(message, client, key, functions, conn, voiceplayers, util=
 			if util.CommandPreTest(message,'leave',key):
 				await i.join(message,client)
 				await i.disconnect()
-		#if util.CommandPreTest(message,'join',key):
-			# for i in adminRole:
-				# for r in message.author.roles:
-					# if str(i[0]) in r.id:
-						# try:
-							# voice = await functions.join(message,client)
-						# except:
-							# client.send_message(message.channel,"Already in voice channel!")
 ############################################UPDATE DATABASE AND LISTS###############################
 	if util.CommandPreTest(message,'arrays',key):
 		await client.send_message(message.channel, "Updating arrays")
 		ser = functions.db.updateDics("server")
-		nsfw = functions.db.updateDics("nsfw")
-		functions.insert(nsfw,ser)
-		print(nsfwchannels)
+		functions.insertInto(ser)
 		print(adminRole)
-#####################################################MISCELLANEOUS##################################
-	if util.CommandPreTest(message,'google',key):
-		name = message.content[len(key+'google'):].strip()
-		name = name.replace(" ", "+")
-		await client.send_message(message.channel, 'https://www.google.fi/?gws_rd=ssl#q={}'.format(name))
-	if util.CommandPreTest(message,'gta businesses',key):
-		await client.send_file(message.channel,'imgs/bikersbusinesses.png')
-	if util.CommandPreTest(message,'how rude',key):
-		await client.send_message(message.channel,'https://cdn.discordapp.com/attachments/155700698955251712/333277468435808256/HOW-RUDE.png')
-####################################################VOICE EFFECTS ##################################
-
