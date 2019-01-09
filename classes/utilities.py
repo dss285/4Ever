@@ -20,3 +20,8 @@ class Utilities:
 		return img
 	def addVoicePlayer(self,voiceplayer):
 		self.voiceplayers.append(voiceplayer)
+	def APIOpen(self, url):
+		hdr = {"User-Agent" : "4Ever Discord Bot"}
+		req = urllib.request.Request(url, headers=hdr)
+		req2 = urllib.request.urlopen(req)
+		return req2

@@ -8,12 +8,13 @@ import random
 import youtube_dl
 import re
 import glob
-from classes import utilities,image,database,main
+import json
+from classes import utilities,image,database,main,completionists
 
 from PIL import ImageFilter
 from PIL import ImageFile
 from PIL import Image
-
+global sounds
 sounds = glob.glob('sounds/*')
 
 
@@ -21,78 +22,89 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 global voice
 voice = None
 async def commandRead(message, client, key, functions, conn, voiceplayers, util=utilities.Utilities()):
-	if util.CommandPreTest(message,'help',key):
-		helpdesc =""":question:** Help**
-		
-			:gear:** Commands**
-			!help - This panel
-			
-			:frame_photo:** Image Manipulation**
-			!resize width height url - Resizes image to wanted sizes
-			!blendimg url url2 - Needs 2 same size and same color mode images to blend them together
-			
+	global sounds
+	if "!e " in message.content:
+		if util.CommandPreTest(message,'help',key):
+			helpdesc =""":question:** Help**
 
-			:musical_note:** Voice Related**
-			!play (URL) - Plays youtube URL
+				:gear:** Commands**
+				!help - This panel
 
-			"""
-		await client.send_message(message.channel,helpdesc)
-	if util.CommandPreTest(message,'sounds',key):
-		string = "**Sounds:**\n"
-		for i in sounds:
-			sv = re.search(r'(sounds)\/(.*).(mp3|ogx)',i)
-			string += str(sv.group(2)+"\n")
-			print(string)
-		await client.send_message(message.channel,string)
 
-#################################################IMAGE RELATED#######################################
-	if util.CommandPreTest(message,'resize',key):
-		name = message.content[len(key+'resize'):].strip()
-		name = name.split(' ')
-		width = int(name[0])
-		height = int(name[1])
-		size = (width,height)
-		url = name[2]
-		img = functions.openImgUrl(url)
-		img = img.resize(size, Image.ANTIALIAS);
-		img.save('temp.png','PNG')
-		await client.send_file(message.channel, 'temp.png')
-	if message.content.startswith(key+'blur'):
-		name = message.content[len(key+'blur'):].strip()
-		name = name.split(" ")
-		url = name[1]
-		bluramount = int(name[0])
-		img = functions.openImgUrl(url)
-		img = img.filter(ImageFilter.GaussianBlur(bluramount));
-		img.save('temp.png','PNG')
-		await client.send_file(message.channel, 'temp.png')
-#############################################ADMIN FUNCTIONS##################################################		
-	if util.CommandPreTest(message,'adminRole',key):
-		server_owner = message.author.server.owner.id
-		server = message.server.id
-		print(server)
-		if server_owner == message.author.id:
-			msg = message.content[len(key+'adminRole <@&'):].strip()
-			msg = msg.replace('>','')
-			msg = int(msg)
-			if not msg in functions.adminRole:
-				sql_d = "DELETE FROM server WHERE serverid=%s"
-				args_d = (int(server),)
-				conn.delete(sql_d,args_d)
-				sql = "INSERT INTO server (admin_role, serverid) VALUES (%s, %s)"
-				args = (int(msg),int(server))
-				conn.insert(sql,args)
-				conn.updateDics("server")
-	if util.CommandPreTest(message,'empty',key):
-		for i in functions.adminRole:
-			for r in message.author.roles:
-				if str(i[0]) in r.id:
-					amountsOfDel = message.content[len(key+'empty'):].strip()
-					amountsOfDel = int(amountsOfDel)
-					print(amountsOfDel)
-					deleted = await client.purge_from(message.channel, limit=amountsOfDel+1)
-					break;
-#############################################VOICE##################################################
+				:musical_note:** Voice Related**
+				!play (URL) - Plays youtube URL
+				!sounds - List all kinds of random sounds that you can type
+
+
+				:peach:** NSFW Related**
+				!rule34 - Rule34 API Search
+				!real - Realbooru API Search
+				"""
+			await client.send_message(message.channel,helpdesc)
+		if util.CommandPreTest(message,'sounds',key):
+			string = "**Sounds:**\n"
+			for i in sounds:
+				sv = re.search(r'(sounds)\/(.*).(mp3|ogx)',i)
+				string += str(sv.group(2)+"\n")
+				print(string)
+			await client.send_message(message.channel,string)
+####	#########################################ADMIN FUNCTIONS##################################################		
+
+		if util.CommandPreTest(message,'empty',key):
+			if functions.isAdmin(message) or message.author == message.server.owner:
+				amountsOfDel = message.content[len(key+'empty'):].strip()
+				amountsOfDel = int(amountsOfDel+1)
+				deleted = await client.purge_from(message.channel, limit=amountsOfDel)
+		if util.CommandPreTest(message,'nsfw',key):
+			if functions.isAdmin(message) or message.author == message.server.owner:
+				if functions.nsfwchannel(message, key):
+					await client.send_message(message.channel, "Updated channel!")
+		if util.CommandPreTest(message,'admrole',key):
+			if message.author == message.server.owner:
+				returned = functions.adminRole(message, key)
+				if returned:
+					await client.send_message(message.channel, "Role has been updated")
+				else:
+					await client.send_message(message.channel, "Something went wrong")
+		if util.CommandPreTest(message,'createmsg',key):
+			if functions.isAdmin(message) or message.author == message.server.owner:
+				await functions.createMessage(client, message, key)
+		if util.CommandPreTest(message,'createbind',key):
+			if functions.isAdmin(message) or message.author == message.server.owner:
+				roles = message.role_mentions
+				if len(roles) > 0:
+					msg = message.content[len(key+'createbind'):].strip()
+					msg = msg.split(" ")
+					functions.db.addBind(msg[0],msg[1],message.server.id)
+		if util.CommandPreTest(message,'removebind',key):
+			if functions.isAdmin(message) or message.author == message.server.owner:
+				msg = message.content[len(key+'removebind'):].strip().split(" ")
+				try:
+					functions.db.removeBind(msg[1],message.server.id)
+				except:
+					pass
+#############################################NSFW##################################################
+		if util.CommandPreTest(message,'rule34',key):
+			if functions.isnsfw(message):
+				tags = message.content[len(key+'rule34'):].strip()
+				tags = tags.replace(' ', '+')
+				url = "https://rule34.xxx/index.php?page=dapi&s=post&q=index&limit=100&tags="+tags
+				req = util.APIOpen(url)
+				parse = ET.parse(req)
+				list = [el.attrib.get('file_url') for el in parse.findall('.//post')]
+				link = random.choice(list)
+				await client.send_message(message.channel, link)
+		if util.CommandPreTest(message,'real',key):
+			if functions.isnsfw(message):
+				tags = message.content[len(key+'real'):].strip()
+				tags = tags.replace(' ', '+')
+				url = "https://realbooru.com/index.php?page=dapi&s=post&q=index&limit=100&tags="+tags
+				req = util.APIOpen(url)
+				parse = ET.parse(req)
+				list = [el.attrib.get('file_url') for el in parse.findall('.//post')]
+				link = random.choice(list)
+				await client.send_message(message.channel, link)
+############################################VOICE##################################################
 	for i in voiceplayers:
 		if i.server == message.server.id:
 			if util.CommandPreTest(message,'queue',key):
@@ -118,14 +130,15 @@ async def commandRead(message, client, key, functions, conn, voiceplayers, util=
 							if message.content in sv.group(1):
 								await i.join(message,client)
 								await i.playVoice(s)
-								await client.delete_message(message)
 								await i.disconnect()
 			if util.CommandPreTest(message,'leave',key):
-				await i.join(message,client)
-				await i.disconnect()
+				try:
+					await i.join(message,client)
+					await i.disconnect()
+				except:
+					pass
 ############################################UPDATE DATABASE AND LISTS###############################
-	if util.CommandPreTest(message,'arrays',key):
-		await client.send_message(message.channel, "Updating arrays")
-		ser = functions.db.updateDics("server")
-		functions.insertInto(ser)
-		print(adminRole)
+	if util.CommandPreTest(message, 'gods', "!"):
+		await client.send_file(message.channel,'imgs/gods.jpg')
+	if util.CommandPreTest(message,'howrude',"!"):
+		await client.send_message(message.channel,'https://cdn.discordapp.com/attachments/155700698955251712/333277468435808256/HOW-RUDE.png')
