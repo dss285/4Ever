@@ -1,0 +1,125 @@
+{
+	"Tridolon Trinity" : {
+		"frame" : {
+			"aura" : "Dead Eye",
+			"exilus" : ["Handspring", true],
+			"mods" : {
+				"Narrow Minded" : 						true,
+				"Primed Continuity": 					true,
+				"Adaptation": 							true,
+				"Fleeting Expertise": 					true,
+				"Tek Collateral":						false,
+				"Hunter Adrenaline": 					true,
+				"Umbral Intensify":						false,
+				"Umbral Vitality":						false
+			}
+		},
+		"primary" : {
+			"name":"**Lanka**",
+			"mods" : {
+				"Point Strike" : 						false,
+				"Vital Sense" : 						true,
+				"Split Chamber" : 						true,
+				"Serration" : 							true,
+				"Vile Acceleration/Vigilante Fervor" :	false,
+				"Riven/Vigilante Armaments" : 		true,
+				"Hellfire" : 							true,
+				"Stormbringer" : 						true
+			}
+		},
+		"secondary" : {
+			"name":"**Kitgun (Tombfinger, Slapneedle, Lovetap)**",
+			"mods" : {
+				"Riven/Jolt":true,
+				"Pistol Pestilence":false,
+				"Barrel Diffusion":false,
+				"(Primed) Heated Charge":true,
+				"(Primed) Pistol Gambit":true,
+				"(Primed) Target Cracker":true,
+				"Lethal Torrent":true,
+				"Hornet Strike":true
+			}
+		},
+		"melee" : {
+			"name":"**Sarpa**",
+			"stance" : "Bullet Dance",
+			"mods" : {
+				"Shattering Impact":true,
+				"Primed Fury":false,
+				"Tek Gravity":false,
+				"Gladiator Vice":false
+			}
+		},
+		"companion" : {
+			"type" : "**Adarza Kavat**",
+			"mods" : {
+				"Animal Instinct":						true,
+				"Hunter Recovery":						true,
+				"Cat's Eye":							false,
+				"Tek Assault":							true,
+				"Link Shields":							false,
+				"Link Health":							true,
+				"Fetch":								true,
+				"Tek Enhance":							true,
+				"Medi-Pet Kit":							true,
+				"Reflect":								true
+			}
+		}
+	}
+}
+
+class Loadout:
+	def __init__(self, name):
+		self.name = name
+		self.frame = data[name]["frame"]
+		self.primary = data[name]["primary"]
+		self.secondary = data[name]["secondary"]
+		self.melee = data[name]["melee"]
+		self.companion = data[name]["companion"]
+	def frameBuild(self,):
+		aura = self.frame["aura"]
+		exilus = self.frame["exilus"][0] +", Polarized: "+str(self.frame["exilus"][1])
+		msg = "Aura: "+aura+"\n"
+		msg = msg+"Exilus: "+exilus+"\n"
+		for i,j in self.frame["mods"].items():
+			msg = msg+i+", Polarized: "+str(j)+"\n"
+		return msg
+
+	def primaryBuild(self,):
+		msg = self.primary["name"]+":\n"
+		for i,j in self.primary["mods"].items():
+			msg = msg + i +", Polarized: "+str(j) +"\n"
+		return msg
+
+	def secondaryBuild(self,):
+		msg = self.secondary["name"]+":\n"
+		for i,j in self.secondary["mods"].items():
+			msg = msg + i +", Polarized: "+str(j) +"\n"
+		return msg
+
+	def meleeBuild(self,):
+		msg = self.melee["name"]+":\n"
+		msg = msg + self.melee["stance"]+"\n"
+		for i,j in self.melee["mods"].items():
+			msg = msg + i +", Polarized: "+str(j) +"\n"
+		return msg
+
+	def companionBuild(self,):
+		msg = self.companion["type"]+":\n"
+		for i,j in self.companion["mods"].items():
+			msg = msg + i +", Polarized: "+str(j) +"\n"
+		return msg
+	def returnAll(self,):
+		return (self.name+": \n"+self.frameBuild()+"\n\n"+self.primaryBuild()+"\n\n"+self.secondaryBuild()+"\n\n"+self.meleeBuild()+"\n\n"+self.companionBuild()+"\n\n")
+
+	async def sendBuild(message,key,client):
+		stripped = message.content[len(key+'build'):].strip()
+		msg = discord.Embed(title=stripped+" Build")
+		if stripped in data.keys():
+			loadout = Loadout(stripped)
+			msg.add_field(name="Frame",value=loadout.frameBuild(),inline=False)
+			msg.add_field(name="Primary",value=loadout.primaryBuild(),inline=False)
+			msg.add_field(name="Secondary",value=loadout.secondaryBuild(),inline=False)
+			msg.add_field(name="Melee",value=loadout.meleeBuild(),inline=False)
+			msg.add_field(name="Companion",value=loadout.companionBuild(),inline=False)
+			await client.send_message(message.channel,embed=msg)
