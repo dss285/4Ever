@@ -36,7 +36,7 @@ class Bot(discord.Client):
         }
         self.basic_task = None
         self.database_task = None
-        
+        #testing
     async def basic_loop(self,):
         await self.wait_until_ready()
         while True:
