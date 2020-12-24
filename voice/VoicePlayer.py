@@ -5,8 +5,6 @@ import youtube_dl
 import os
 import glob
 import datetime
-from voice.Playlist import Playlist
-from voice.Song import Song
 from abstract.EmbedTemplate import EmbedTemplate
 class VoicePlayer:
 	def __init__(self, vc, channel, client):
@@ -16,17 +14,17 @@ class VoicePlayer:
 			'format': 'bestaudio/best',
 			'outtmpl': 'videos/%(extractor)s-%(id)s-%(title)s.%(ext)s',
 			'restrictfilenames': True,
-			'noplaylist': True,
 			'nocheckcertificate': True,
 			'ignoreerrors': False,
+			'quiet' : True,
 			'logtostderr': False,
-			'quiet': True,
 			'no_warnings': True,
 			'default_search': 'auto',
 			'source_address': '0.0.0.0'
 		}
 		self.ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
-		self.playlist = Playlist(False)
+		self.playlist = []
+		self.looprunning = False
 		self.vc = vc
 		self.channel = channel
 		self.client = client
@@ -42,14 +40,17 @@ class VoicePlayer:
 		if self.vc != None:
 			if url:
 				await self.addtoPlaylist(url)
-			await self.playSong()		
-	async def playSong(self,):
-		while self.vc.is_playing():
-			await asyncio.sleep(2)
-		else:
-			song = self.playlist.returnOne()
+			if not self.looprunning:
+				await self.playLoop()
+	async def playLoop(self,):
+		self.looprunning = True
+		while self.playlist:
+			song = self.playlist.pop(0)
 			if song:
-				self.vc.play(discord.FFmpegPCMAudio(song.voice))
+				self.vc.play(song["data"])
+			while self.vc.is_playing():
+				await asyncio.sleep(2)
+		self.looprunning = False
 	async def pause(self,):
 		if self.vc:
 			if self.vc.is_playing():
@@ -68,14 +69,46 @@ class VoicePlayer:
 				self.vc.resume()
 				await self.channel.send(embed=em)
 	async def addtoPlaylist(self,url):
-		song_info = self.ytdl.extract_info(url, download=True)
-		em = EmbedTemplate(title="Added to Playlist",description="Added song "+song_info["title"]+" to playlist")
-		data = self.ytdl.prepare_filename(song_info)
-		data = {
-			"title" : song_info["title"],
-			"duration" : song_info["duration"],
-			"views" : song_info["view_count"],
-			"song" : data
-		}
-		self.playlist.add(Song(data["duration"], data["views"], data["title"], url, data["song"]))
+		data = self.ytdl.extract_info(url, download=False)
+		added = []
+		if 'entries' in data:
+			for x in data['entries']:
+				
+				filename = x['url']
+				song = {
+					"data" 		: discord.FFmpegPCMAudio(filename),
+					"title" 	: x["title"],
+					"duration" 	: x["duration"],
+					"views" 	: x["view_count"],
+				}
+				self.playlist.append(song)
+				added.append({
+					"title" : x["title"],
+					"duration" 	: x["duration"],
+					"views" 	: x["view_count"],
+					"url" : 	x["webpage_url"]
+					})
+				
+		else:
+			filename = data['url']
+			song = {
+				"data" 		: discord.FFmpegPCMAudio(filename),
+				"title" 	: data["title"],
+				"duration" 	: data["duration"],
+				"views" 	: data["view_count"],
+			}
+			self.playlist.append(song)
+			added.append({
+				"title" :  data["title"],
+				"duration" 	: data["duration"],
+				"views" 	: data["view_count"],
+				"url" : 	data["webpage_url"]
+			})
+		addedstr = ""
+		for i in added:
+			if len(addedstr) < 1000:
+				addedstr += "[{}]({}), {} {:,} views\n".format(i["title"][:40], i["url"], datetime.timedelta(seconds=i["duration"]), i["views"])
+			else:
+				break
+		em = EmbedTemplate(title="Added {} to Playlist".format(len(added)),description=addedstr)
 		await self.channel.send(embed=em)

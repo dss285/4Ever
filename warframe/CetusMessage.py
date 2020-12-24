@@ -16,7 +16,8 @@ class CetusMessage(UpdatedMessage):
         em.add_field(name="Status", value=str(cetus))
         em.add_field(name="Time until new rotation", value="{:.0f} min".format(cetus.minutesLeft()))
         await self.message.edit(embed=em)
-        if (cetus.isNight() and self.mention.message == None):
+        if (cetus.isNight() and self.mention and self.mention.message == None):
             await self.mention.send_mention(self.message.channel, Timer(cetus.expiry))
-        await self.mention.check()
+        if self.mention:
+            await self.mention.check()
 

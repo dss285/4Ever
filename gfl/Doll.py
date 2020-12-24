@@ -12,7 +12,7 @@ class Doll:
         self.aliases = aliases
         self.productiontimer = productiontimer
     def getImagePath(self,):
-        path = "/home/dss/project/website/www/assets/gfl/dolls"
+        path = "/home/dss/project/website/assets/gfl/dolls"
         return "{}/128x167_{}.png".format(path, self.name.replace(" ", "_").replace("/",""))
     def getEmbed(self,):
         em = EmbedTemplate(title=self.name)
