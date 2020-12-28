@@ -4,7 +4,7 @@ from datetime import datetime
 import time
 import traceback
 import config
-
+#  https://api.github.com/repos/dss285/4Ever/commits
 from abstract.EmbedTemplate import EmbedTemplate
 
 from forever.Database import Database

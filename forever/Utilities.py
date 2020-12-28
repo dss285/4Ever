@@ -1,5 +1,6 @@
 import pytz
 import aiohttp
+import time
 from datetime import datetime
 class Utilities:
     def utc2local(timestamp):
@@ -14,3 +15,5 @@ class Utilities:
                     return await resp.text()
                 else:
                     return None
+    def ts2ifmodifiedsince(timestamp):
+        return time.strftime("%a, %d %b %Y %H:%M%S GMT", time.gmtime(timestamp)) 
