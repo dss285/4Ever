@@ -3,15 +3,24 @@ import aiohttp
 import asyncio
 import re
 import time
+import pathlib
+import os
 import discord
 import json
 class DropTables:
 	def __init__(self,):
+		self.path = str(pathlib.Path(__file__).parent.absolute())+"/droptables.json"
 		self.data = {}
 		self.timeupdated = 0
+		self.interval = 86400
+		if os.path.exists(self.path):
+			fo = open(self.path, "r")
+			self.data = json.load(fo)
+			fo.close()
+			self.timeupdated = time.time()
 	async def getData(self,):
 		xx = time.time()
-		if xx - self.timeupdated > 43200: #12h
+		if xx - self.timeupdated > self.interval: #12h
 			self.timeupdated = time.time()
 			async with aiohttp.ClientSession() as sess:
 				async with sess.get("https://n8k6e2y6.ssl.hwcdn.net/repos/hnfvc0o3jnfvc873njb03enrf56.html") as r:
@@ -112,6 +121,9 @@ class DropTables:
 									else:
 										test[drop].append(text)
 							self.data[i[0]]["data"] = test
+						fw = open(self.path, "w")
+						fw.write(json.dumps(self.data, sort_keys=True))
+						fw.close()
 	def searchKey(self, key, searched_value):
 		vals = []
 		for i in self.data[key]["data"]:

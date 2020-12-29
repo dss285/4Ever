@@ -10,17 +10,21 @@ class VoicePlayer:
 	def __init__(self, vc, channel, client):
 		self.sounds = {}
 		self.updateSounds()
+		self.loop = client.loop
 		ytdl_format_options = {
 			'format': 'bestaudio/best',
 			'outtmpl': 'videos/%(extractor)s-%(id)s-%(title)s.%(ext)s',
 			'restrictfilenames': True,
 			'nocheckcertificate': True,
-			'ignoreerrors': False,
+			'ignoreerrors': True,
 			'quiet' : True,
 			'logtostderr': False,
 			'no_warnings': True,
 			'default_search': 'auto',
 			'source_address': '0.0.0.0'
+		}
+		self.ffmpeg_opts = {
+			'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5'
 		}
 		self.ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
 		self.playlist = []
@@ -35,7 +39,7 @@ class VoicePlayer:
 	async def playFile(self, fileName):
 		while self.vc.is_playing():
 			await asyncio.sleep(3)
-		self.vc.play(discord.FFmpegPCMAudio(fileName))
+		self.vc.play(discord.FFmpegPCMAudio(fileName, **self.ffmpeg_opts))
 	async def handle(self, url):
 		if self.vc != None:
 			if url:
@@ -61,7 +65,7 @@ class VoicePlayer:
 		if self.vc:
 			if self.vc.is_playing():
 				self.vc.stop()
-				await self.channel.send(embed=EmbedTemplate(title="Song", value="Song skipped"))
+				await self.channel.send(embed=EmbedTemplate(title="Song", description="Song skipped"))
 	async def resume(self,):
 		if self.vc:
 			if self.vc.is_paused():
@@ -69,7 +73,7 @@ class VoicePlayer:
 				self.vc.resume()
 				await self.channel.send(embed=em)
 	async def addtoPlaylist(self,url):
-		data = self.ytdl.extract_info(url, download=False)
+		data = await self.loop.run_in_executor(None, lambda: self.ytdl.extract_info(url, download=False))
 		added = []
 		if 'entries' in data:
 			for x in data['entries']:

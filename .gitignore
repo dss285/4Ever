@@ -140,3 +140,4 @@ cython_debug/
 sounds/*
 videos/*
 config.py
+warframe/droptables.json

@@ -1,5 +1,6 @@
 import asyncio
 import discord
+import time
 from abstract.Commands import Commands
 from abstract.Command import Command
 from abstract.EmbedTemplate import EmbedTemplate
@@ -23,7 +24,7 @@ class WarframeCommands(Commands):
     def fetchCommands(self, commandKey):
         commandlist = {}
         commandlist["worldstate"] = WorldState(commandKey, self.database)
-        commandlist["relics"] = RelicSearch(commandKey, self.droptables)
+        commandlist["relics"] = RelicSearch(commandKey, self.droptables, self.client)
         return commandlist
 class WorldState(Command):
     def __init__(self, commandKey, database):
@@ -51,15 +52,19 @@ class WorldState(Command):
                     if new_message:
                         self.database.objectToDB(new_message)
 class RelicSearch(Command):
-    def __init__(self, commandKey, droptables):
+    def __init__(self, commandKey, droptables, client):
+        self.client = client
         self.droptables = droptables
         super().__init__(commandKey, "relic", """Relic search""", "{} {} {}".format(commandKey, "relic", "*<relicname>*"), ["relicsearch"])
     async def run(self, message, server):
         pattern = re.escape(self.commandKey)+"\s("+"|".join(self.aliases)+")\s(.*)"
         reg = re.match(pattern, message.content)
+        xx = time.time()
         if reg:
-            if not self.droptables.data:
-                await self.droptables.getData()
+            if not self.droptables.data or xx-self.droptables.timeupdated > self.droptables.interval:
+                asyncio.create_task(self.droptables.getData())
+            while not self.droptables.data:
+                await asyncio.sleep(3)
             await message.channel.send(embed=self.droptables.relicSearch(reg.group(2)))
 
 
