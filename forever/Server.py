@@ -12,9 +12,16 @@ class Server:
         self.notifications = notifications
         self.joinable_roles = joinable_roles
         self.voice = None
-    async def updateMessages(self, data):
+    async def updateMessages(self, data, db):
+        removekeys = []
         for message_type, message in self.updated_messages.items():
-            await message.refresh(data[message_type])
+            try:
+                await message.refresh(data[message_type])
+            except discord.NotFound:
+                removekeys.append(message_type)
+                db.queryToDB(message.delete())
+        for i in removekeys:
+            del self.updated_messages[i]
     def return_ids(self,):
         tmp = {
             "server_id" : self.server_id,

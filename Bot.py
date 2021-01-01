@@ -9,6 +9,7 @@ from abstract.EmbedTemplate import EmbedTemplate
 
 from forever.Database import Database
 from forever.Server import Server
+from forever.Newswire import Newswire
 from warframe.Worldstate import Worldstate
 from warframe.DropTables import DropTables
 
@@ -24,13 +25,14 @@ class Bot(discord.Client):
         super().__init__(*args, **kwargs)
         self.database = Database("localhost", "dss285", "aeon123", "aeon")
         self.worldstate = Worldstate()
+        self.newswire = Newswire()
         self.commandKey = "\u0024"
         self.commands = {
             "voice" :       VoiceCommands("Voice", "This module has all the voice commands related to the bot", self.commandKey+"voice", self),
             "moderation" :  ModerationCommands("Moderation", "This module has all the moderation commands related to the bot", self.commandKey+"mod"),
             "math" :        MathCommands("Math", "This module has math commands", self.commandKey+"math", self),
             "warframe" :    WarframeCommands("Warframe", "Warframe module", self.commandKey+"wf", self, self.database),
-            "forever" :     ForeverCommands("Forever", "Main module of the bot", self.commandKey+"fe", self, self.database),
+            "forever" :     ForeverCommands("Forever", "Main module of the bot", self.commandKey+"fe", self, self.database, self.newswire),
             "gfl" :         GFLCommands("Girls' Frontline", "GFL Module", self.commandKey+"gfl", self, self.database),
             "nsfw" :        NSFWCommands("NSFW", "NSFW Module", self.commandKey+"nsfw")
         }
@@ -42,9 +44,13 @@ class Bot(discord.Client):
         while True:
             try:
                 await self.worldstate.getData(self.database.runtime)
+                await self.newswire.getData()
+                gtadata = {"gtanw" : self.newswire.last_list}
+                data = {**gtadata, **self.worldstate.runtime}
                 for i in self.database.runtime["servers"]:
                     await asyncio.sleep(2)
-                    await i.updateMessages(self.worldstate.runtime)
+                    await i.updateMessages(data, self.database)
+                        
             except Exception as e:
                 print("[BASE LOOP] {}".format(e))
                 print(traceback.format_exc())

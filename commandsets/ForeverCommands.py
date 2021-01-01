@@ -2,15 +2,17 @@ import asyncio
 import discord
 from forever.CrissCross import CrissCross as CC
 from forever.Newswire import Newswire
+from forever.NewswireMessage import NewswireMessage
 from abstract.Commands import Commands
 from abstract.Command import Command
 from abstract.EmbedTemplate import EmbedTemplate
 import re
 
 class ForeverCommands(Commands):
-    def __init__(self, moduleName, description, commandKey, client, database):
+    def __init__(self, moduleName, description, commandKey, client, database, newswire):
         self.client = client
         self.database = database
+        self.newswire = newswire
         commandlist = self.fetchCommands(commandKey)
         super().__init__(moduleName, commandlist, description, commandKey)
 
@@ -22,7 +24,7 @@ class ForeverCommands(Commands):
         commandlist["add"] = Add(commandKey, self.database)
         commandlist["remove"] = Remove(commandKey, self.database)
         commandlist["crisscross"] = CrissCross(commandKey, self.client)
-        commandlist["gtanw"] = GTANewswire(commandKey)
+        commandlist["gtanw"] = GTANewswire(commandKey, self.database, self.newswire)
         return commandlist
 class Join(Command):
     def __init__(self, commandKey):
@@ -113,16 +115,22 @@ class CrissCross(Command):
             else:
                 await message.channel.send("Only 1 user may be challenged at once.")
 class GTANewswire(Command):
-    def __init__(self, commandKey):
-        self.newswire = Newswire()
+    def __init__(self, commandKey, database, newswire):
+        self.database = database
+        self.newswire = newswire
         super().__init__(commandKey, "gtanw", """GTA V newswire""", "{} {}".format(commandKey, "gtanw"), [])
     async def run(self, message, server):
-        pattern = re.escape(self.commandKey)+"\s("+"|".join(self.aliases)+")"
+        pattern = re.escape(self.commandKey)+"\s("+"|".join(self.aliases)+")\s?(message)?"
         reg = re.match(pattern, message.content)
         if reg:
-            x = 5
-            posts = await self.newswire.getData(5)
-            for i in posts:
-                await message.channel.send(embed=i)
-                x+=1
-            
+            if reg.group(2):
+                em = EmbedTemplate(title="WorldState Message", description="Updating soon..")
+                msg = await message.channel.send(embed=em)
+                nwmessage = NewswireMessage(msg)
+                self.database.objectToDB(nwmessage)
+            else:
+                x = 5
+                posts = await self.newswire.getEmbeds(x)
+                for i in posts:
+                    await message.channel.send(embed=i)
+                    x+=1

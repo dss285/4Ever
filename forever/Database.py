@@ -9,6 +9,7 @@ from warframe.FissureMessage import FissureMessage
 from warframe.SortieMessage import SortieMessage
 from warframe.NightwaveMessage import NightwaveMessage
 from warframe.InvasionMessage import InvasionMessage
+from forever.NewswireMessage import NewswireMessage
 
 from warframe.SolNode import SolNode
 from warframe.SolPlanet import SolPlanet
@@ -134,8 +135,10 @@ class Database:
                                 elif message_type == "poe":
                                     mention = next((i for i in notifications if i.name == "poe_night"), None)
                                     updatedmessages[message_type] = CetusMessage(message, mention)
+                                elif message_type == "gtanw":
+                                    updatedmessages[message_type] = NewswireMessage(message)
                         except discord.NotFound:
-                            self.queryToDB("DELETE FROM updated_messages WHERE message_id={}".format(
+                            self.queryToDB("DELETE FROM discord_updated_messages WHERE message_id={}".format(
                                 x["message_id"]
                             ))
         self.runtime["servers"].append(Server(server_id, serverdisc, logchannel, updatedmessages, notifications, joinableroles))
@@ -156,11 +159,38 @@ class Database:
                         joinableroles.append(x["role_id"])
                 for x in data["discord_updated_messages"]:
                     if i.server_id == x["server_id"]:
-                        updatedmessages[x["message_type"]] = [x["message_id"], x["message_channel_id"]]
+                        updatedmessages[x["message_type"]] = (x["message_id"], x["message_channel_id"])
                 for x in data["discord_notifications"]:
                     if i.server_id == x["server_id"]:
                         notifications[x["name"]] = x["role_id"]
             # checking current runtime objects, that do they need an update
+                for key, value in updatedmessages.items():
+                    try:
+                        channel = client.get_channel(value[1])
+                        msg = await channel.fetch_message(value[0])
+                        if key not in i.updated_messages:
+                            if key == "nightwave":
+                                msg = NightwaveMessage(msg)
+                            elif key == "sorties":
+                                msg = SortieMessage(msg)
+                            elif key == "fissures":
+                                msg = FissureMessage(msg, [])
+                            elif key == "invasions":
+                                msg = InvasionMessage(msg, [])
+                            elif key == "poe":
+                                msg = CetusMessage(msg, next((x for x in i.notifications if x.name=="poe_night"), None))
+                            elif key == "gtanw":
+                                msg = NewswireMessage(msg)
+                            if msg:
+                                i.updated_messages[key] = msg
+                        else:
+                            item = i.updated_messages[key]
+                            if item.message != msg:
+                                i.updated_messages[key].message = msg
+                    except discord.NotFound:
+                        self.queryToDB("DELETE FROM discord_updated_messages WHERE message_id={}".format(
+                                value[0]
+                            ))
                 for key, value in tmp.items():
                     if key == "logchannel_id":
                         if value != logchannel:
@@ -175,31 +205,6 @@ class Database:
                         for j, k in notifications.items():
                             if k not in value.values() and j not in value.keys():
                                 i.notifications.append(BotMention(j, i.serverobj.get_role(k)))
-                    # elif key == "updated_messages_ids":
-                    #     tmp = []
-                    #     for x in i.updated_messages:
-                    #         if not isinstance(x, str):
-                    #             if x.message_type in updatedmessages.keys() and [x.message.id, x.message.channel.id] in updatedmessages.values():
-                    #                 tmp.append(x)
-                    #     i.updated_messages = tmp
-                    #     for j, k in updatedmessages.items():
-                    #         print(j)
-                    #         if k not in value.values():
-                    #             channel = client.get_channel(k[1])
-                    #             msg = await channel.fetch_message(k[0])
-                    #             if j == "nightwave":
-                    #                 msg = NightwaveMessage(msg)
-                    #             elif j == "sorties":
-                    #                 msg = SortieMessage(msg)
-                    #             elif j == "fissures":
-                    #                 msg = FissureMessage(msg, [])
-                    #             elif j == "invasions":
-                    #                 msg = InvasionMessage(msg, [])
-                    #             elif j == "poe":
-                    #                 msg = CetusMessage(msg, next((x for x in i.notifications if x.name=="poe_night"), None))
-                    #             if msg:
-                    #                 i.updated_messages.append(msg)
-                    #         print("ok")
                         
             else:
                 tmp = [x.server_id for x in self.runtime["servers"]]

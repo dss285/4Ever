@@ -3,10 +3,11 @@ import discord
 import asyncio
 import json
 import time
+from abstract.EmbedTemplate import EmbedTemplate
 class Newswire:
+
 	def __init__(self,):
 		self.time = 0
-		self.posted_ids = set()
 		self.last_list = None
 	async def getData(self, limit=5):
 		xx = time.time()
@@ -19,27 +20,43 @@ class Newswire:
 						posts = []
 						x = 0
 						for i in parsedjson:
-							if x <= limit:
+							if x < limit:
 								primaryid = i['primary_tags'][0]['id']
 								if primaryid == 702:
 									posts.append(i)
 									x+=1
 							else:
 								break
-						for i in range(len(posts)):
-							if posts[i]['id'] not in self.posted_ids:
-								image = posts[i]['preview_images_parsed']['newswire_block']['square']
-								em = discord.Embed(
-									title=posts[i]['title'], 
-									description="https://www.rockstargames.com/newswire/article/{}".format(posts[i]['id']))
-								em.set_image(url=image)
-								self.posted_ids.add(posts[i]['id'])
-								posts[i] = em
-						self.last_list = posts[::-1]
-						return self.last_list
+						processed = []
+						for i in posts:
+							processed.append(NewswireItem(
+								i['id'],
+								i['title'],
+								"https://www.rockstargames.com/newswire/article/{}".format(i['id']),
+								i['preview_images_parsed']['newswire_block']['square'])
+							)
+						self.last_list = processed
+						self.time = time.time()
 		else:
 			return self.last_list
-						
+	async def getEmbeds(self, limit=5):
+		await self.getData(limit)
+		embeds = []
+		for i in self.last_list[::-1]:
+			embeds.append(i.toEmbed())
+		return embeds
+class NewswireItem:
+	def __init__(self, id, title, url, image):
+		self.id = id
+		self.title = title
+		self.url = url
+		self.image = image
+	def toEmbed(self,):
+		em = EmbedTemplate(
+			title=self.title, 
+			description=self.url)
+		em.set_image(url=self.image)
+		return em
 if __name__ == '__main__':
 	nw = Newswire()
 	loop = asyncio.get_event_loop()
