@@ -261,6 +261,3 @@ class Database:
 
 if __name__ == "__main__":
     db = Database("localhost", "dss285", "aeon123", "aeon")
-    fo = open("test.json", "w")
-    fo.write(json.dumps(db.getData(), indent=3, sort_keys=True))
-    fo.close()

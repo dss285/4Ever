@@ -4,7 +4,7 @@ from datetime import datetime
 import time
 import traceback
 import config
-#  https://api.github.com/repos/dss285/4Ever/commits
+
 from abstract.EmbedTemplate import EmbedTemplate
 
 from forever.Database import Database
@@ -38,7 +38,6 @@ class Bot(discord.Client):
         }
         self.basic_task = None
         self.database_task = None
-        #testing
     async def basic_loop(self,):
         await self.wait_until_ready()
         while True:
@@ -58,9 +57,7 @@ class Bot(discord.Client):
     async def database_loop(self,):
         await self.wait_until_ready()
         while True:
-            
             await self.database.update_runtime(self)
-            
             await asyncio.sleep(3)
             if self.database.runtime["servers"]:
                 for x in self.guilds:
