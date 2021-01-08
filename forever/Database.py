@@ -35,7 +35,6 @@ class Database:
             "wf_items",
             "wf_missions",
             "wf_nightwave",
-            "wf_droptables",
             "wf_solsystem_nodes",
             "wf_solsystem_planets",
             "wf_sorties",

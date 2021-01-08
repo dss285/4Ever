@@ -38,4 +38,4 @@ class Realbooru(Command):
                 data = await NSFW.realbooru(reg.group(2))
                 em = EmbedTemplate(title=reg.group(2).title(), description = data["tags"].replace("*",""))
                 em.set_image(url=data["img"])
-                await message.channel.send(embed=em)
+                await message.reply(embed=em)

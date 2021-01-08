@@ -9,7 +9,6 @@ from abstract.Command import Command
 from forever.Math import Math
 
 import math
-import scipy
 class MathCommands(Commands):
     def __init__(self, moduleName, description, commandKey, client):
         self.client = client

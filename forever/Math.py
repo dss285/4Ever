@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 import numpy
-import scipy
 class Math:
 	def equationGraph(formula, x_range, tick_n):
 		x = np.array(x_range)
@@ -20,7 +19,6 @@ class Math:
 			x**2,
 			x**3,
 			2**x,
-			scipy.math.factorial(x)
 			
 		]
 		for i in y:
