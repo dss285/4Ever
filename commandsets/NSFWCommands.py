@@ -1,9 +1,9 @@
 import asyncio
 import discord
 from forever.NSFW import NSFW
-from abstract.Commands import Commands
-from abstract.Command import Command
-from abstract.EmbedTemplate import EmbedTemplate
+from models.Commands import Commands
+from models.Command import Command
+from models.EmbedTemplate import EmbedTemplate
 import re
 
 class NSFWCommands(Commands):

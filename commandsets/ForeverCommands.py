@@ -3,9 +3,9 @@ import discord
 from forever.CrissCross import CrissCross as CC
 from forever.Newswire import Newswire
 from forever.NewswireMessage import NewswireMessage
-from abstract.Commands import Commands
-from abstract.Command import Command
-from abstract.EmbedTemplate import EmbedTemplate
+from models.Commands import Commands
+from models.Command import Command
+from models.EmbedTemplate import EmbedTemplate
 import re
 
 class ForeverCommands(Commands):

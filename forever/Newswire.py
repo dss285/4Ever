@@ -3,7 +3,7 @@ import discord
 import asyncio
 import json
 import time
-from abstract.EmbedTemplate import EmbedTemplate
+from models.EmbedTemplate import EmbedTemplate
 class Newswire:
 
 	def __init__(self,):

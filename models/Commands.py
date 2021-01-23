@@ -1,5 +1,5 @@
-from abstract.Command import Command
-from abstract.EmbedTemplate import EmbedTemplate
+from models.Command import Command
+from models.EmbedTemplate import EmbedTemplate
 class Commands:
     def __init__(self, moduleName, commandList, description, commandKey):
         self.moduleName = moduleName

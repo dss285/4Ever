@@ -3,10 +3,10 @@ import asyncio
 import time
 from datetime import datetime
 from warframe.CetusStatus import CetusStatus
-from abstract.UpdatedMessage import UpdatedMessage
-from abstract.EmbedTemplate import EmbedTemplate
-from abstract.BotMention import BotMention
-from abstract.Timer import Timer
+from models.UpdatedMessage import UpdatedMessage
+from models.EmbedTemplate import EmbedTemplate
+from models.BotMention import BotMention
+from models.Timer import Timer
 class CetusMessage(UpdatedMessage):
     def __init__(self, message, mention):
         self.mention = mention

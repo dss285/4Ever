@@ -2,7 +2,7 @@ import re
 import json
 import pymysql.cursors
 import discord
-from abstract.BotMention import BotMention
+from models.BotMention import BotMention
 
 from warframe.CetusMessage import CetusMessage
 from warframe.FissureMessage import FissureMessage

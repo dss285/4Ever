@@ -5,7 +5,7 @@ import time
 import traceback
 import config
 
-from abstract.EmbedTemplate import EmbedTemplate
+from models.EmbedTemplate import EmbedTemplate
 
 from forever.Database import Database
 from forever.Server import Server

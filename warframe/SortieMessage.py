@@ -3,8 +3,8 @@ import asyncio
 import time
 from datetime import datetime
 import warframe.Sorties as Sorties
-from abstract.UpdatedMessage import UpdatedMessage
-from abstract.EmbedTemplate import EmbedTemplate
+from models.UpdatedMessage import UpdatedMessage
+from models.EmbedTemplate import EmbedTemplate
 
 class SortieMessage(UpdatedMessage):
     def __init__(self, message):

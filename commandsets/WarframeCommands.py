@@ -1,9 +1,9 @@
 import asyncio
 import discord
 import time
-from abstract.Commands import Commands
-from abstract.Command import Command
-from abstract.EmbedTemplate import EmbedTemplate
+from models.Commands import Commands
+from models.Command import Command
+from models.EmbedTemplate import EmbedTemplate
 
 from warframe.DropTables import DropTables
 from warframe.CetusMessage import CetusMessage

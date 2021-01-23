@@ -3,8 +3,8 @@ import asyncio
 import time
 from datetime import datetime
 from warframe.InvasionItem import InvasionItem
-from abstract.UpdatedMessage import UpdatedMessage
-from abstract.EmbedTemplate import EmbedTemplate
+from models.UpdatedMessage import UpdatedMessage
+from models.EmbedTemplate import EmbedTemplate
 class InvasionMessage(UpdatedMessage):
     def __init__(self, message, mentions):
         super().__init__(message, "invasions")

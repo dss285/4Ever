@@ -5,7 +5,7 @@ import youtube_dl
 import os
 import glob
 import datetime
-from abstract.EmbedTemplate import EmbedTemplate
+from models.EmbedTemplate import EmbedTemplate
 class VoicePlayer:
 	def __init__(self, vc, channel, client):
 		self.sounds = {}

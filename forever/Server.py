@@ -2,7 +2,7 @@ import asyncio
 import aiohttp
 import discord
 from voice.VoicePlayer import VoicePlayer
-from abstract.UpdatedMessage import UpdatedMessage
+from models.UpdatedMessage import UpdatedMessage
 class Server:
     def __init__(self, server_id, serverobj, logchannel, updated_messages, notifications, joinable_roles):
         self.server_id = server_id

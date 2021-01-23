@@ -3,8 +3,8 @@ import asyncio
 import time
 from datetime import datetime
 from warframe.FissureItem import FissureItem
-from abstract.UpdatedMessage import UpdatedMessage
-from abstract.EmbedTemplate import EmbedTemplate
+from models.UpdatedMessage import UpdatedMessage
+from models.EmbedTemplate import EmbedTemplate
 
 class FissureMessage(UpdatedMessage):
     def __init__(self, message, mentions):

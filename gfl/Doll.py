@@ -1,4 +1,4 @@
-from abstract.EmbedTemplate import EmbedTemplate
+from models.EmbedTemplate import EmbedTemplate
 import datetime
 class Doll:
     def __init__(self, doll_id, name, doll_type, rarity, formation_bonus, formation_tiles, skill, aliases, productiontimer=None):

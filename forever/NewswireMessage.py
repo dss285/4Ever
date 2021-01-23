@@ -4,8 +4,8 @@ import time
 from datetime import datetime
 
 from forever.Utilities import Utilities
-from abstract.UpdatedMessage import UpdatedMessage
-from abstract.EmbedTemplate import EmbedTemplate
+from models.UpdatedMessage import UpdatedMessage
+from models.EmbedTemplate import EmbedTemplate
 
 class NewswireMessage(UpdatedMessage):
     def __init__(self, message):

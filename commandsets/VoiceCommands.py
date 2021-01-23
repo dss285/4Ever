@@ -1,8 +1,8 @@
 import asyncio
 import discord
-from abstract.Commands import Commands
-from abstract.Command import Command
-from abstract.EmbedTemplate import EmbedTemplate
+from models.Commands import Commands
+from models.Command import Command
+from models.EmbedTemplate import EmbedTemplate
 from voice.VoicePlayer import VoicePlayer
 import re
 class VoiceCommands(Commands):

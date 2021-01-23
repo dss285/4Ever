@@ -1,6 +1,6 @@
 import discord
 import asyncio
-from abstract.Timer import Timer
+from models.Timer import Timer
 class BotMention:
     def __init__(self, name, role):
         self.name = name

@@ -4,8 +4,8 @@ import time
 from datetime import datetime
 from forever.Utilities import Utilities
 from warframe.NightwaveItem import NightwaveItem
-from abstract.UpdatedMessage import UpdatedMessage
-from abstract.EmbedTemplate import EmbedTemplate
+from models.UpdatedMessage import UpdatedMessage
+from models.EmbedTemplate import EmbedTemplate
 class NightwaveMessage(UpdatedMessage):
     def __init__(self, message):
         super().__init__(message, "nightwave")
