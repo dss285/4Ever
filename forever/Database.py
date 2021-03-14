@@ -221,7 +221,7 @@ class Database:
         self.runtime["gfl"]["dolls"].clear()
         self.runtime["gfl"]["equipment"].clear()
         for d in data["gfl_dolls"]:
-            doll = Doll(d["id_dolls"], d["name"], 
+            doll = Doll(d["id"], d["name"], 
             d["type"], 
             d["rarity"], 
             d["formation_bonus"], 

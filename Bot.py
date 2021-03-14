@@ -44,7 +44,7 @@ class Bot(discord.Client):
             try:
                 await self.worldstate.getData(self.database.runtime)
                 await self.newswire.getData()
-                gtadata = {"gtanw" : self.newswire.last_list}
+                gtadata = {"gtanw" : self.newswire.nw_items.values()}
                 data = {**gtadata, **self.worldstate.runtime}
                 for i in self.database.runtime["servers"]:
                     await asyncio.sleep(2)
