@@ -6,9 +6,7 @@ from models.EmbedTemplate import EmbedTemplate
 from models.Commands import Commands
 from models.Command import Command
 
-from forever.Math import Math
-
-import math
+from forever import Math
 class MathCommands(Commands):
     def __init__(self, moduleName, description, commandKey, client):
         self.client = client

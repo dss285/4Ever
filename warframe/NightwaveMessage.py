@@ -2,7 +2,7 @@ import discord
 import asyncio
 import time
 from datetime import datetime
-from forever.Utilities import Utilities
+from forever import Utilities
 from warframe.NightwaveItem import NightwaveItem
 from models.UpdatedMessage import UpdatedMessage
 from models.EmbedTemplate import EmbedTemplate

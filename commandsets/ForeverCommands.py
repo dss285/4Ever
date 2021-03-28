@@ -60,12 +60,14 @@ class Add(Command):
             reg = re.match(pattern, message.content)
             if reg:
                 if reg.group(2):
-                    if len(message.role_mentions) == 1:
-                        sql = """INSERT INTO discord_joinable_roles (role_id, server_id) VALUES ({}, {})""".format(
-                            message.role_mentions[0].id,
-                            server.server_id
-                        )
-                        self.database.queryToDB(sql)
+                    for i in message.role_mentions:
+                        if i.id not in server.joinable_roles:
+                            sql = """INSERT INTO discord_joinable_roles (role_id, server_id) VALUES ({}, {})""".format(
+                                i.id,
+                                server.server_id
+                            )
+                            self.database.queryToDB(sql)
+                            server.joinable_roles.add(i.id)
 class Remove(Command):
     def __init__(self, commandKey, database):
         self.database = database
@@ -76,13 +78,14 @@ class Remove(Command):
             reg = re.match(pattern, message.content)
             if reg:
                 if reg.group(2):
-                    for i in server.joinable_roles:
-                        if str(i) == reg.group(2):
+                    for i in message.role_mentions:
+                        if i in server.joinable_roles:
                             sql = "DELETE FROM discord_joinable_roles WHERE role_id={} AND server_id={}".format(
                                 i.id,
                                 server.server_id
                             )
                             self.database.queryToDB(sql)
+                            server.joinable_roles.remove(i)
 class ListRoles(Command):
     def __init__(self, commandKey):
         super().__init__(commandKey, "list", """Lists roles""", "{} {}".format(commandKey, "list"), [])
@@ -124,10 +127,11 @@ class GTANewswire(Command):
         reg = re.match(pattern, message.content)
         if reg:
             if reg.group(2):
-                em = EmbedTemplate(title="WorldState Message", description="Updating soon..")
+                em = EmbedTemplate(title="GTANW Message", description="Updating soon..")
                 msg = await message.channel.send(embed=em)
                 nwmessage = NewswireMessage(msg)
                 self.database.objectToDB(nwmessage)
+                server.updated_messages["gtanw"] = nwmessage
             else:
                 x = 5
                 posts = await self.newswire.getEmbeds(x)

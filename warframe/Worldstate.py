@@ -3,7 +3,7 @@ import aiohttp
 import discord
 import json
 from forever.Database import Database
-from forever.Utilities import Utilities
+from forever import Utilities
 from warframe.NightwaveItem import NightwaveItem
 from warframe.FissureItem import FissureItem
 from warframe.CetusStatus import CetusStatus

@@ -38,9 +38,11 @@ class WorldState(Command):
                 em = EmbedTemplate(title="WorldState Message", description="Updating soon..")
                 if reg.group(2):
                     new_message = None
+                    msg_type = None
                     msg = await message.channel.send(embed=em)
                     if reg.group(2) == "nightwave":
                         new_message = NightwaveMessage(msg)
+                        
                     elif reg.group(2) == "sorties":
                         new_message = SortieMessage(msg)
                     elif reg.group(2) == "fissures":
@@ -51,6 +53,8 @@ class WorldState(Command):
                         new_message = InvasionMessage(msg)
                     if new_message:
                         self.database.objectToDB(new_message)
+                        msg_type = reg.group(2)
+                        server.updated_messages[msg_type] = new_message
 class RelicSearch(Command):
     def __init__(self, commandKey, droptables, client):
         self.client = client

@@ -1,6 +1,6 @@
 from warframe.SolNode import SolNode
 from warframe.SolPlanet import SolPlanet
-from forever.Utilities import Utilities
+from forever import Utilities
 import time
 class FissureItem:
     def __init__(self, oid, start_time, expiry_time, mission_type, node, era):

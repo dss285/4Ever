@@ -19,8 +19,6 @@ class GFLCommands(Commands):
         commandList["production"] = ProductionDolls(commandKey, self.client, self.database)
         commandList["doll"] = DollInfo(commandKey, self.client, self.database)
         return commandList
-
-
 class ProductionDolls(Command):
     def __init__(self, commandKey, client, database):
         self.client = client

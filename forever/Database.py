@@ -48,7 +48,6 @@ class Database:
                                           password=self.password,
                                           db=self.database,
                                           cursorclass=pymysql.cursors.DictCursor)
-        self.initRuntime()
     def objectToDB(self, object_in):
         with self.connection.cursor() as cursor:
             cursor.execute(object_in.sql())
@@ -58,6 +57,7 @@ class Database:
             cursor.execute(sql)
         self.connection.commit()
     def getData(self,):
+        self.connection.ping(reconnect=True)
         results = {}
         for i in self.tables:
             results[i] = self.getTableRows(i)
@@ -69,7 +69,7 @@ class Database:
             results = cursor.fetchall()
         self.connection.commit()
         return results
-    def initRuntime(self,):
+    def structure(self,):
         self.runtime["warframe"] = {}
         self.runtime["warframe"]["nightwave"] = []
         self.runtime["warframe"]["invasions"] = []
@@ -88,20 +88,20 @@ class Database:
         self.runtime["gfl"]["dolls"] = []
         self.runtime["gfl"]["equipment"] = []
 
-        self.runtime["servers"] = []
+        self.runtime["servers"] = {}
         self.connection.ping(reconnect=True)
     async def getServer(self, server_id, data, client):
         log_id = next((i["logchannel_id"] for i in data["discord_server"] if i["server_id"] == server_id), None)
         serverdisc = client.get_guild(server_id)
         logchannel = client.get_channel(log_id) if log_id else None
         updatedmessages = {}
-        joinableroles = []
+        joinableroles = set()
         notifications = []
         for x in data["discord_joinable_roles"]:
             if x["server_id"] == server_id:
                 role = serverdisc.get_role(x["role_id"])
                 if role:
-                    joinableroles.append(role)
+                    joinableroles.add(role)
                 else:
                     sql = "DELETE FROM discord_joinable_roles WHERE role_id={}".format(x["role_id"])
                     self.queryToDB(sql)
@@ -140,78 +140,9 @@ class Database:
                             self.queryToDB("DELETE FROM discord_updated_messages WHERE message_id={}".format(
                                 x["message_id"]
                             ))
-        self.runtime["servers"].append(Server(server_id, serverdisc, logchannel, updatedmessages, notifications, joinableroles))
+        self.runtime["servers"][server_id] = Server(server_id, serverdisc, logchannel, updatedmessages, notifications, joinableroles)
     async def update_runtime(self, client):
         data = self.getData()
-        if "servers" in self.runtime.keys():
-            for i in self.runtime["servers"]:
-            #variables
-                tmp = i.return_ids()
-                logchannel = next((x["logchannel_id"] for x in data["discord_server"] if x["server_id"] == i.server_id), None)
-                notifications = {}
-                updatedmessages = {}
-                joinableroles = []
-                
-            #populating data into variables
-                for x in data["discord_joinable_roles"]:
-                    if i.server_id == x["server_id"]:
-                        joinableroles.append(x["role_id"])
-                for x in data["discord_updated_messages"]:
-                    if i.server_id == x["server_id"]:
-                        updatedmessages[x["message_type"]] = (x["message_id"], x["message_channel_id"])
-                for x in data["discord_notifications"]:
-                    if i.server_id == x["server_id"]:
-                        notifications[x["name"]] = x["role_id"]
-            # checking current runtime objects, that do they need an update
-                for key, value in updatedmessages.items():
-                    try:
-                        channel = client.get_channel(value[1])
-                        msg = await channel.fetch_message(value[0])
-                        if key not in i.updated_messages:
-                            if key == "nightwave":
-                                msg = NightwaveMessage(msg)
-                            elif key == "sorties":
-                                msg = SortieMessage(msg)
-                            elif key == "fissures":
-                                msg = FissureMessage(msg, [])
-                            elif key == "invasions":
-                                msg = InvasionMessage(msg, [])
-                            elif key == "poe":
-                                msg = CetusMessage(msg, next((x for x in i.notifications if x.name=="poe_night"), None))
-                            elif key == "gtanw":
-                                msg = NewswireMessage(msg)
-                            if msg:
-                                i.updated_messages[key] = msg
-                        else:
-                            item = i.updated_messages[key]
-                            if item.message != msg:
-                                i.updated_messages[key].message = msg
-                    except discord.NotFound:
-                        self.queryToDB("DELETE FROM discord_updated_messages WHERE message_id={}".format(
-                                value[0]
-                            ))
-                for key, value in tmp.items():
-                    if key == "logchannel_id":
-                        if value != logchannel:
-                            i.logchannel = client.get_channel(logchannel)
-                    elif key == "joinable_roles_ids":
-                        i.joinable_roles = [x for x in i.joinable_roles if x.id in joinableroles]
-                        for x in joinableroles:
-                            if x not in value:
-                                i.joinable_roles.append(i.serverobj.get_role(x))
-                    elif key == "notifications_ids":
-                        i.notifications = [x for x in i.notifications if x.name in notifications.keys() and x.role.id in notifications.values()]
-                        for j, k in notifications.items():
-                            if k not in value.values() and j not in value.keys():
-                                i.notifications.append(BotMention(j, i.serverobj.get_role(k)))
-                        
-            else:
-                tmp = [x.server_id for x in self.runtime["servers"]]
-                for i in data["discord_server"]:
-                    if i["server_id"] not in tmp:
-                        await self.getServer(i["server_id"], data, client)
-        else:
-            await self.translateToObjects(client)
 
         if "gfl" in self.runtime.keys():
             self.gfl(data)
@@ -246,8 +177,8 @@ class Database:
         for item in data["wf_solsystem_nodes"]:
             self.runtime["warframe"]["translate"]["solsystem"]["nodes"].append(SolNode(item["node_id"], item["name"],
             next(planet for planet in self.runtime["warframe"]["translate"]["solsystem"]["planets"] if planet.id == item["planet_id"])))
-    async def translateToObjects(self, client):
-        self.initRuntime()
+    async def initRuntime(self, client):
+        self.structure()
         data = self.getData()
     #Server Translation
         for i in data["discord_server"]:

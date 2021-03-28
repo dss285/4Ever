@@ -3,6 +3,7 @@ import asyncio
 from datetime import datetime
 import time
 import traceback
+
 import config
 
 from models.EmbedTemplate import EmbedTemplate
@@ -20,6 +21,7 @@ from commandsets.WarframeCommands import WarframeCommands
 from commandsets.ForeverCommands import ForeverCommands
 from commandsets.GFLCommands import GFLCommands
 from commandsets.NSFWCommands import NSFWCommands
+
 class Bot(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -46,25 +48,26 @@ class Bot(discord.Client):
                 await self.newswire.getData()
                 gtadata = {"gtanw" : self.newswire.nw_items.values()}
                 data = {**gtadata, **self.worldstate.runtime}
-                for i in self.database.runtime["servers"]:
+                for i in self.database.runtime["servers"].values():
                     await asyncio.sleep(2)
                     await i.updateMessages(data, self.database)
                         
             except Exception as e:
-                print("[BASE LOOP] {}".format(e))
-                print(traceback.format_exc())
+                print("Error, logged")
+                log(["[BASE LOOP][{}] {}".format(time.time(), e), traceback.format_exc()+"\n\n"])
+
             await asyncio.sleep(60)
     async def database_loop(self,):
         await self.wait_until_ready()
         while True:
-            await self.database.update_runtime(self)
             await asyncio.sleep(3)
             if self.database.runtime["servers"]:
                 for x in self.guilds:
-                    if x.id not in [i.server_id for i in self.database.runtime["servers"]]:
+                    if x.id not in [i.server_id for i in self.database.runtime["servers"].values()]:
                         tmp = Server(x.id, x, None, {}, [], [])
                         self.database.objectToQuery(tmp)
-                for x in self.database.runtime["servers"]:
+                        self.database.runtime["servers"][x.id] = tmp
+                for x in self.database.runtime["servers"].values():
                     if x.server_id not in [i.id for i in self.guilds]:
                         self.database.queryToDB(x.delete())
                     if x.voice != None:
@@ -74,15 +77,16 @@ class Bot(discord.Client):
         print("Everythings ready")
         print(discord.__version__)
         print(await self.application_info())
-        await self.database.translateToObjects(self)
+        await self.database.initRuntime(self)
         self.database_task = self.loop.create_task(self.database_loop())
         self.basic_task = self.loop.create_task(self.basic_loop())
     async def on_message(self, message):
         try:
-            server = next((x for x in self.database.runtime["servers"] if message.guild.id == x.server_id), None)
+            server = self.database.runtime.get(message.guild.id)
             for key, module in self.commands.items():
                 if message.content.startswith(module.commandKey):
                     await module.parse(message, server)
+                    break
             if server:
                 if server.voice:
                     for i, f in server.voice.sounds.items():
@@ -95,15 +99,18 @@ class Bot(discord.Client):
                     em.add_field(name="{}".format(name.title()), value=commandset.commandKey+" help")
                 await message.channel.send(embed=em)
         except Exception as e:
-            print("[COMMANDS] {}".format(e))
-            print(traceback.format_exc())
+            print("Error, logged")
+            log(["[COMMANDS][{}] {}".format(time.time(), e), traceback.format_exc()+"\n\n"])
     async def on_voice_state_update(self, member, before, after):   
         voice_client = next((i for i in self.voice_clients if i.guild.id == member.guild.id), None)
         if voice_client != None:
             if len(voice_client.channel.members) == 1:
                 await voice_client.disconnect()
-
-                
+def log(messages, file="log.txt"):
+    fo = open("log.txt", "a+")
+    for i in messages:
+        fo.write(i)
+    fo.close()
             
 if __name__ == "__main__":
     bot = Bot()
