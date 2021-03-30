@@ -6,29 +6,29 @@ from models.EmbedTemplate import EmbedTemplate
 from voice.VoicePlayer import VoicePlayer
 import re
 class VoiceCommands(Commands):
-    def __init__(self, moduleName, description, commandKey, client):
+    def __init__(self, module_name, description, command_key, client):
         self.client = client
-        commandlist = self.fetchCommands(commandKey)
-        super().__init__(moduleName, commandlist, description, commandKey)
+        command_list = self.fetchCommands(command_key)
+        super().__init__(module_name, command_list, description, command_key)
 
-    def fetchCommands(self, commandKey):
-        commandlist = {}
-        commandlist["resume"] = Resume(commandKey)
-        commandlist["play"] = Play(commandKey, self.client)
-        commandlist["pause"] = Pause(commandKey)
-        commandlist["skip"] = Skip(commandKey)
-        commandlist["leave"] = Leave(commandKey, self.client)
-        commandlist["sound"] = Sound(commandKey, self.client)
-        return commandlist
+    def fetchCommands(self, command_key):
+        command_list = {}
+        command_list["resume"] = Resume(command_key)
+        command_list["play"] = Play(command_key, self.client)
+        command_list["pause"] = Pause(command_key)
+        command_list["skip"] = Skip(command_key)
+        command_list["leave"] = Leave(command_key, self.client)
+        command_list["sound"] = Sound(command_key, self.client)
+        return command_list
 
 class Play(Command):
-    def __init__(self, commandKey, client):
+    def __init__(self, command_key, client):
         self.client = client
-        super().__init__(commandKey, "play", """Play music, by giving URLs""", "{} {} {}".format(commandKey, "play", "*<url>*"), ["test"])
+        super().__init__(command_key, "play", """Play music, by giving URLs""", "{} {} {}".format(command_key, "play", "*<url>*"), ["test"])
 
         
     async def run(self, message, server):
-        pattern = re.escape(self.commandKey)+"\s("+"|".join(self.aliases)+")\s(http[s]?:\/\/(www\.)?(youtube\.com|youtu\.be)\/(watch\?.*v=)?.*)"
+        pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s(http[s]?:\/\/(www\.)?(youtube\.com|youtu\.be)\/(watch\?.*v=)?.*)"
         reg = re.match(pattern, message.content)
         if reg:
             if message.author.voice.channel:
@@ -43,30 +43,30 @@ class Play(Command):
                         server.voice = None
                         await self.run(message, server)
 class Resume(Command):
-    def __init__(self, commandKey):
-        super().__init__(commandKey, "resume", """Resume paused track""", "{} {}".format(commandKey, "resume"), [])
+    def __init__(self, command_key):
+        super().__init__(command_key, "resume", """Resume paused track""", "{} {}".format(command_key, "resume"), [])
     async def run(self, message, server):
         if server:
             if server.voice:
                 await server.voice.resume()
 class Pause(Command):
-    def __init__(self, commandKey):
-        super().__init__(commandKey, "pause", """Pause currently playing track""", "{} {}".format(commandKey, "pause"), [])
+    def __init__(self, command_key):
+        super().__init__(command_key, "pause", """Pause currently playing track""", "{} {}".format(command_key, "pause"), [])
     async def run(self, message, server):
         if server:
             if server.voice:
                 await server.voice.pause()
 class Skip(Command):
-    def __init__(self, commandKey):
-        super().__init__(commandKey, "skip", """Skip currently playing track""", "{} {}".format(commandKey, "skip"), [])
+    def __init__(self, command_key):
+        super().__init__(command_key, "skip", """Skip currently playing track""", "{} {}".format(command_key, "skip"), [])
     async def run(self, message, server):
         if server:
             if server.voice:
                 await server.voice.skip()
 class Leave(Command):
-    def __init__(self, commandKey, client):
+    def __init__(self, command_key, client):
         self.client = client
-        super().__init__(commandKey, "leave", """Leaves the channel""", "{} {}".format(commandKey, "leave"), [])
+        super().__init__(command_key, "leave", """Leaves the channel""", "{} {}".format(command_key, "leave"), [])
     async def run(self, message, server):
         vc = next((x for x in self.client.voice_clients if message.guild == x.guild), None)
         if vc.is_connected():
@@ -77,11 +77,11 @@ class Leave(Command):
                 if server.voice:
                     server.voice = None
 class Sound(Command):
-    def __init__(self, commandKey, client):
+    def __init__(self, command_key, client):
         self.client = client
-        super().__init__(commandKey, "sound", """Plays a certain sound""", "{} {} {}".format(commandKey, "sound", "<*list*|*sound name*>"), [])
+        super().__init__(command_key, "sound", """Plays a certain sound""", "{} {} {}".format(command_key, "sound", "<*list*|*sound name*>"), [])
     async def run(self, message, server):
-        pattern = re.escape(self.commandKey)+"\s("+"|".join(self.aliases)+")\s([a-zA-Z0-9]+)"
+        pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s([a-zA-Z0-9]+)"
         reg = re.match(pattern, message.content)
         if reg:
             if message.author.voice.channel:

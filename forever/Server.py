@@ -4,13 +4,18 @@ import discord
 from voice.VoicePlayer import VoicePlayer
 from models.UpdatedMessage import UpdatedMessage
 class Server:
-    def __init__(self, server_id, serverobj, logchannel, updated_messages, notifications, joinable_roles):
+    def __init__(self, server_id, discord_server, logchannel, updated_messages, notifications, joinable_roles):
         self.server_id = server_id
-        self.serverobj = serverobj
+        self.discord_server = discord_server
         self.logchannel = logchannel
         self.updated_messages = updated_messages
         self.notifications = notifications
-        self.joinable_roles = joinable_roles
+        self.joinable_roles = {"set":joinable_roles}
+        self.joinable_roles["id"] = {}
+        self.joinable_roles["name"] = {}
+        for i in self.joinable_roles["set"]:
+            self.joinable_roles["id"][i.id] = i
+            self.joinable_roles["name"][i.name] = i
         self.voice = None
     async def updateMessages(self, data, db):
         removekeys = []
@@ -49,4 +54,5 @@ class Server:
         return "DELETE FROM discord_server WHERE server_id={server}".format(
             server=self.server_id
         )
-        
+    def __repr__(self):
+        return "<Forever.Server discord_server={}>".format(self.discord_server.__repr__())

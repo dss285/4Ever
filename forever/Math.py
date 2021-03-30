@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import math
-import numpy
 def equationGraph(formula, x_range, tick_n):
 	x = np.array(x_range)
 	y = eval(formula)
@@ -9,6 +8,31 @@ def equationGraph(formula, x_range, tick_n):
 	plt.xticks(np.arange(min(x), max(x)+1, tick_n))
 	plt.grid(True)
 	plt.savefig('test.png')
+def base2_to_base10(binary):
+	potency = len(binary)-1
+	total = 0
+	for i in binary:
+		total += (int(i)*2)**potency
+		potency -=1
+	return total
+def base10_to_base2(decimal):
+	potency = math.ceil(math.log(decimal, 2))
+	potency_tmp = potency
+	total = decimal
+	tmp = ""
+	while total != 0:
+		iteration = 2**potency
+		if total-iteration >= 0:
+			tmp += "1"
+			total -= iteration
+		else:
+			tmp += "0"
+		potency -= 1
+	while len(tmp) < potency_tmp+1:
+		tmp += "0"
+	if tmp[0] == "0":
+		tmp = tmp[1:]
+	return tmp
 def commonOnotations():
 	x = np.array(range(1, 8))
 	y = [
@@ -30,10 +54,10 @@ def commonOnotations():
 	plt.grid(True)
 	plt.savefig('onotation.png')
 def probability(trials, drops, chance):
-	coefficient = Math.coefficient(int(trials),int(drops))
+	coeff = coefficient(int(trials),int(drops))
 	pow_probability = chance**int(drops)
 	pow_probability_2 = (1-float(chance))**(int(trials)-int(drops))
-	probability_out = coefficient*pow_probability*pow_probability_2
+	probability_out = coeff*pow_probability*pow_probability_2
 	return probability_out
 def coefficient(trials, successes):
 	if(successes > trials - successes):
@@ -54,3 +78,6 @@ def pythagoras(a=None, b=None, c=None):
 	elif c and b:
 		return math.sqrt(math.pow(c,2)-math.pow(b,2))
 	return None
+if __name__ == "__main__":
+	print(base2_to_base10("100000000001"))
+	print(base10_to_base2(2049))

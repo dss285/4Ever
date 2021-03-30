@@ -133,7 +133,7 @@ class Database:
                                     updatedmessages[message_type] = SortieMessage(message)
                                 elif message_type == "poe":
                                     mention = next((i for i in notifications if i.name == "poe_night"), None)
-                                    updatedmessages[message_type] = CetusMessage(message, mention)
+                                    updatedmessages[message_type] = CetusMessage(message, mention, client)
                                 elif message_type == "gtanw":
                                     updatedmessages[message_type] = NewswireMessage(message)
                         except discord.NotFound:

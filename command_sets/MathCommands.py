@@ -8,18 +8,18 @@ from models.Command import Command
 
 from forever import Math
 class MathCommands(Commands):
-    def __init__(self, moduleName, description, commandKey, client):
+    def __init__(self, module_name, description, command_key, client):
         self.client = client
-        commandList = self.fetchCommands(commandKey)
-        super().__init__(moduleName, commandList, description, commandKey)
-    def fetchCommands(self, commandKey):
-        commandList = {}
-        commandList["probability"] = Probability(commandKey, self.client)
-        return commandList
+        command_list = self.fetchCommands(command_key)
+        super().__init__(module_name, command_list, description, command_key)
+    def fetchCommands(self, command_key):
+        command_list = {}
+        command_list["probability"] = Probability(command_key, self.client)
+        return command_list
 class Probability(Command):
-    def __init__(self, commandKey, client):
+    def __init__(self, command_key, client):
         self.client = client
-        super().__init__(commandKey, "probability", """Calculates probability""", "{} {}".format(commandKey, "probability"), ["chances"])
+        super().__init__(command_key, "probability", """Calculates probability""", "{} {}".format(command_key, "probability"), ["chances"])
     async def run(self, message, server):
         def is_number(s):
             try:

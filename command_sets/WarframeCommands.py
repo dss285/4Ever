@@ -14,25 +14,25 @@ from warframe.NightwaveMessage import NightwaveMessage
 import re
 
 class WarframeCommands(Commands):
-    def __init__(self, moduleName, description, commandKey, client, database):
+    def __init__(self, module_name, description, command_key, client, database):
         self.database = database
         self.client = client
         self.droptables = DropTables()
-        commandlist = self.fetchCommands(commandKey)
-        super().__init__(moduleName, commandlist, description, commandKey)
+        command_list = self.fetchCommands(command_key)
+        super().__init__(module_name, command_list, description, command_key)
 
-    def fetchCommands(self, commandKey):
-        commandlist = {}
-        commandlist["worldstate"] = WorldState(commandKey, self.database)
-        commandlist["relics"] = RelicSearch(commandKey, self.droptables, self.client)
-        return commandlist
+    def fetchCommands(self, command_key):
+        command_list = {}
+        command_list["worldstate"] = WorldState(command_key, self.database)
+        command_list["relics"] = RelicSearch(command_key, self.droptables, self.client)
+        return command_list
 class WorldState(Command):
-    def __init__(self, commandKey, database):
+    def __init__(self, command_key, database):
         self.database = database
-        super().__init__(commandKey, "worldstate", """Creates an message where X thing is updated from Warframe Worldstate""", "{} {} {}".format(commandKey, "worldstate", "*<nightwave|sorties|poe|invasions|fissures>*"), ["worldstate"])
+        super().__init__(command_key, "worldstate", """Creates an message where X thing is updated from Warframe Worldstate""", "{} {} {}".format(command_key, "worldstate", "*<nightwave|sorties|poe|invasions|fissures>*"), ["worldstate"])
     async def run(self, message, server):
         if message.author.guild_permissions.administrator:
-            pattern = re.escape(self.commandKey)+"\s("+"|".join(self.aliases)+")\s(nightwave|sorties|poe|invasions|fissures)"
+            pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s(nightwave|sorties|poe|invasions|fissures)"
             reg = re.match(pattern, message.content)
             if reg:
                 em = EmbedTemplate(title="WorldState Message", description="Updating soon..")
@@ -56,12 +56,12 @@ class WorldState(Command):
                         msg_type = reg.group(2)
                         server.updated_messages[msg_type] = new_message
 class RelicSearch(Command):
-    def __init__(self, commandKey, droptables, client):
+    def __init__(self, command_key, droptables, client):
         self.client = client
         self.droptables = droptables
-        super().__init__(commandKey, "relic", """Relic search""", "{} {} {}".format(commandKey, "relic", "*<relicname>*"), ["relicsearch"])
+        super().__init__(command_key, "relic", """Relic search""", "{} {} {}".format(command_key, "relic", "*<relicname>*"), ["relicsearch"])
     async def run(self, message, server):
-        pattern = re.escape(self.commandKey)+"\s("+"|".join(self.aliases)+")\s(.*)"
+        pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s(.*)"
         reg = re.match(pattern, message.content)
         xx = time.time()
         if reg:
