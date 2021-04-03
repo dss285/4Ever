@@ -57,7 +57,8 @@ class GTANewswire(Command):
                 msg = await message.channel.send(embed=em)
                 nwmessage = NewswireMessage(msg)
                 self.database.objectToDB(nwmessage)
-                server.updated_messages["gtanw"] = nwmessage
+                server.updated_messages["name"]["gtanw"] = nwmessage
+                server.updated_messages["id"][nwmessage.id] = nwmessage
             else:
                 x = 5
                 posts = await self.newswire.getEmbeds(x)
@@ -69,3 +70,4 @@ class RemindMe(Command):
         self.client = client
         super().__init__(command_key, "remindme", """Remind me""", "{} {} {} {}".format(command_key, "remindme", "*<minutes>*", "*<name>*"))
     async def run(self, message, server):
+        pass

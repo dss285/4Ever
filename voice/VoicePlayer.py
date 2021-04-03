@@ -4,12 +4,21 @@ import time
 import youtube_dl
 import os
 import glob
+import json
 import datetime
 from models.EmbedTemplate import EmbedTemplate
+class Song:
+	def __init__(self, data, title, duration, views, url):
+		self.data = data
+		self.title = title
+		self.duration = duration
+		self.views = views
+		self.url = url
 class VoicePlayer:
+
 	def __init__(self, vc, channel, client):
 		self.sounds = {}
-		self.updateSounds()
+		self.update_sounds()
 		self.loop = client.loop
 		ytdl_format_options = {
 			'format': 'bestaudio/best',
@@ -24,6 +33,7 @@ class VoicePlayer:
 			'source_address': '0.0.0.0'
 		}
 		self.ffmpeg_opts = {
+			'options' : '-vn',
 			'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5'
 		}
 		self.ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
@@ -32,7 +42,7 @@ class VoicePlayer:
 		self.vc = vc
 		self.channel = channel
 		self.client = client
-	def updateSounds(self,):
+	def update_sounds(self,):
 		sounds = glob.glob('sounds/*')
 		for i in sounds:
 			self.sounds[os.path.splitext(os.path.basename(i))[0]] = i
@@ -43,15 +53,15 @@ class VoicePlayer:
 	async def handle(self, url):
 		if self.vc != None:
 			if url:
-				await self.addtoPlaylist(url)
+				await self.add_to_queue(url)
 			if not self.looprunning:
-				await self.playLoop()
-	async def playLoop(self,):
+				await self.play_loop()
+	async def play_loop(self,):
 		self.looprunning = True
 		while self.playlist:
-			song = self.playlist.pop(0)
+			song = self.playlist.pop(len(self.playlist)-1)
 			if song:
-				self.vc.play(song["data"])
+				self.vc.play(song.data)
 			while self.vc.is_playing():
 				await asyncio.sleep(2)
 		self.looprunning = False
@@ -72,47 +82,25 @@ class VoicePlayer:
 				em = EmbedTemplate(title="Player Resumed",description="pause to pause again")
 				self.vc.resume()
 				await self.channel.send(embed=em)
-	async def addtoPlaylist(self,url):
-		data = await self.loop.run_in_executor(None, lambda: self.ytdl.extract_info(url, download=False))
-		added = []
-		if 'entries' in data:
+	async def add_to_queue(self,url):
+		def add_playlist(data, new_songs):
 			for x in data['entries']:
-				
-				filename = x['url']
-				song = {
-					"data" 		: discord.FFmpegPCMAudio(filename),
-					"title" 	: x["title"],
-					"duration" 	: x["duration"],
-					"views" 	: x["view_count"],
-				}
-				self.playlist.append(song)
-				added.append({
-					"title" : x["title"],
-					"duration" 	: x["duration"],
-					"views" 	: x["view_count"],
-					"url" : 	x["webpage_url"]
-					})
-				
+				song = Song(discord.FFmpegPCMAudio(x['url'], **self.ffmpeg_opts), x['title'], x['duration'], x['views'], x['url'])
+				new_songs.append(song)
+		data = await self.loop.run_in_executor(None, lambda: self.ytdl.extract_info(url, download=False))
+		new_songs = []
+		if 'entries' in data:
+			await self.loop.run_in_executor(None, lambda: add_playlist(data, new_songs))
 		else:
-			filename = data['url']
-			song = {
-				"data" 		: discord.FFmpegPCMAudio(filename),
-				"title" 	: data["title"],
-				"duration" 	: data["duration"],
-				"views" 	: data["view_count"],
-			}
-			self.playlist.append(song)
-			added.append({
-				"title" :  data["title"],
-				"duration" 	: data["duration"],
-				"views" 	: data["view_count"],
-				"url" : 	data["webpage_url"]
-			})
-		addedstr = ""
-		for i in added:
-			if len(addedstr) < 1000:
-				addedstr += "[{}]({}), {} {:,} views\n".format(i["title"][:40], i["url"], datetime.timedelta(seconds=i["duration"]), i["views"])
+			song = Song(discord.FFmpegPCMAudio(data['url'], **self.ffmpeg_opts), data['title'], data['duration'], data['views'], data['url'])
+
+			new_songs.append(song)
+		new_songs_str = ""
+		for i in new_songs:
+			if len(new_songs_str) < 1000:
+				new_songs_str += "[{}]({}), {} {:,} views\n".format(i.title[:40], i.url, datetime.timedelta(seconds=i.duration), i.views)
 			else:
 				break
-		em = EmbedTemplate(title="Added {} to Playlist".format(len(added)),description=addedstr)
+		self.playlist.extend(new_songs)
+		em = EmbedTemplate(title="Added {} to Playlist".format(len(new_songs)),description=new_songs_str)
 		await self.channel.send(embed=em)

@@ -42,8 +42,8 @@ class Bot(discord.Client):
             "gfl" :         GFLCommands("Girls' Frontline", "GFL Module", self.command_key+"gfl", self, self.database),
             "nsfw" :        NSFWCommands("NSFW", "NSFW Module", self.command_key+"nsfw")
         }
-        self.basic_task = None
-        self.database_task = None
+        self.database_task = self.loop.create_task(self.database_loop())
+        self.basic_task = self.loop.create_task(self.basic_loop())
     async def basic_loop(self,):
         await self.wait_until_ready()
         while True:
@@ -63,27 +63,35 @@ class Bot(discord.Client):
             await asyncio.sleep(60)
     async def database_loop(self,):
         await self.wait_until_ready()
+        await self.database.initRuntime(self)
         while True:
             await asyncio.sleep(3)
             if self.database.runtime["servers"]:
+                guilds = set()
                 for x in self.guilds:
-                    if x.id not in [i.server_id for i in self.database.runtime["servers"].values()]:
-                        tmp = Server(x.id, x, None, {}, [], [])
+                    if x.id not in self.database.runtime["servers"]:
+                        tmp = Server(x.id, x, None, {}, [], set(), {})
                         self.database.objectToQuery(tmp)
                         self.database.runtime["servers"][x.id] = tmp
-                for x in self.database.runtime["servers"].values():
-                    if x.server_id not in [i.id for i in self.guilds]:
-                        self.database.queryToDB(x.delete())
-                    if x.voice != None:
-                        x.voice.updateSounds()
+                    guilds.add(x.id)
+                
+                for i, j in self.database.runtime["servers"].items():
+                    if i not in guilds:
+                        self.database.queryToDB(j.delete())
+                    if j.voice != None:
+                        j.voice.update_sounds()
             await asyncio.sleep(10)
     async def on_ready(self,):
         print("Everythings ready")
         print(discord.__version__)
         print(await self.application_info())
-        await self.database.initRuntime(self)
-        self.database_task = self.loop.create_task(self.database_loop())
-        self.basic_task = self.loop.create_task(self.basic_loop())
+        
+        
+    async def on_guild_join(self, guild):
+        #(self, server_id, discord_server, logchannel, updated_messages, notifications, joinable_roles, role_messages
+        server = Server(guild.id, guild, None, {}, [], set(), {})
+        self.database.runtime["servers"][guild.id] = server
+        self.database.objectToDB(server)
     async def on_message(self, message):
         try:
             server = self.database.runtime.get("servers").get(message.guild.id)
@@ -105,13 +113,40 @@ class Bot(discord.Client):
         except Exception as e:
             print("Error, logged")
             log(["[COMMANDS][{}] {}".format(time.time(), e), traceback.format_exc()+"\n\n"])
-    async def on_voice_state_update(self, member, before, after):   
-        voice_client = next((i for i in self.voice_clients if i.guild.id == member.guild.id), None)
-        if voice_client != None:
-            if len(voice_client.channel.members) == 1:
-                await voice_client.disconnect()
+    async def on_voice_state_update(self, member, before, after):
+        server = self.database.runtime["servers"].get(member.guild.id)
+        if server and server.voice and len(server.voice.vc.channel.members) == 1:
+            server.voice.playlist.clear()
+            await server.voice.skip()
+            await server.voice.vc.disconnect()
+    async def on_raw_reaction_add(self, payload):
+        if payload.guild_id:
+            server = self.database.runtime.get("servers").get(payload.guild_id)
+            if server:
+                if payload.message_id in server.joinable_roles["reactions"] and str(payload.emoji) == server.joinable_roles["reactions"][payload.message_id]["emoji"]:
+                    member = await server.discord_server.fetch_member(payload.user_id)
+                    await member.add_roles(server.joinable_roles["id"][server.joinable_roles["reactions"][payload.message_id]["role_id"]])
+
+    async def on_raw_reaction_remove(self, payload):
+        if payload.guild_id:
+            server = self.database.runtime.get("servers").get(payload.guild_id)
+            if server:
+                if payload.message_id in server.joinable_roles["reactions"] and str(payload.emoji) == server.joinable_roles["reactions"][payload.message_id]["emoji"]:
+                    member = await server.discord_server.fetch_member(payload.user_id)
+                    await member.remove_roles(server.joinable_roles["id"][server.joinable_roles["reactions"][payload.message_id]["role_id"]])
+
     async def on_raw_message_delete(self, payload):
         message = payload.cached_message
+        if message:
+            server = self.database.runtime["servers"].get(message.guild.id)
+            if server:
+                queries = server.delete_message(message)
+                if queries:
+                    for i in queries:
+                        self.database.queryToDB(i)
+                        del server.joinable_roles["reactions"][message.id]
+
+        
     async def on_raw_bulk_message_delete(self, payload):
         if len(payload.message_ids) == len(payload.cached_messages):
             message = payload.cached_messages
@@ -135,6 +170,7 @@ class Bot(discord.Client):
         pass
     async def on_member_ban(self, guild, user):
         pass
+
 def log(messages, file="log.txt"):
     fo = open("log.txt", "a+")
     for i in messages:

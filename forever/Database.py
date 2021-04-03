@@ -1,5 +1,3 @@
-import re
-import json
 import pymysql.cursors
 import discord
 from models.BotMention import BotMention
@@ -27,6 +25,7 @@ class Database:
             "discord_server",
             "discord_notifications",
             "discord_joinable_roles",
+            "discord_role_messages",
             "discord_updated_messages",
             "gfl_dolls",
             "gfl_equipment",
@@ -49,10 +48,12 @@ class Database:
                                           db=self.database,
                                           cursorclass=pymysql.cursors.DictCursor)
     def objectToDB(self, object_in):
+        self.connection.ping(reconnect=True)
         with self.connection.cursor() as cursor:
             cursor.execute(object_in.sql())
         self.connection.commit()
     def queryToDB(self, sql):
+        self.connection.ping(reconnect=True)
         with self.connection.cursor() as cursor:
             cursor.execute(sql)
         self.connection.commit()
@@ -92,61 +93,88 @@ class Database:
         self.connection.ping(reconnect=True)
     async def getServer(self, server_id, data, client):
         log_id = next((i["logchannel_id"] for i in data["discord_server"] if i["server_id"] == server_id), None)
-        serverdisc = client.get_guild(server_id)
+        discord_server = client.get_guild(server_id)
         logchannel = client.get_channel(log_id) if log_id else None
-        updatedmessages = {}
-        joinableroles = set()
+        updated_messages = {}
+        joinable_roles = set()
+        role_messages = {}
         notifications = []
+        for x in data["discord_role_messages"]:
+            if x["server_id"] == server_id:
+                channel = client.get_channel(x["channel_id"])
+                message = None
+                try:
+                    message = await channel.fetch_message(x["message_id"])
+                except discord.NotFound:
+                    self.queryToDB("DELETE FROM discord_updated_messages WHERE message_id={}".format(
+                        x["message_id"]
+                    ))
+                    self.queryToDB("DELETE FROM discord_role_messages WHERE message_id={}".format(
+                        x["message_id"]
+                    ))
+                    continue
+                if message:
+                    role_messages[message.id] = {
+                        "message" : message,
+                        "emoji" : x["emoji"],
+                        "role_id" : x["role_id"] 
+                    }
         for x in data["discord_joinable_roles"]:
             if x["server_id"] == server_id:
-                role = serverdisc.get_role(x["role_id"])
+                role = discord_server.get_role(x["role_id"])
                 if role:
-                    joinableroles.add(role)
+                    joinable_roles.add(role)
                 else:
                     sql = "DELETE FROM discord_joinable_roles WHERE role_id={}".format(x["role_id"])
                     self.queryToDB(sql)
         for x in data["discord_notifications"]:
             if x["server_id"] == server_id:
-                role = serverdisc.get_role(x["role_id"])
+                role = discord_server.get_role(x["role_id"])
                 if role:
                     bot_mention = BotMention(x["name"], role)
                     notifications.append(bot_mention)
                 else:
                     sql = "DELETE FROM discord_notifications WHERE role_id={}".format(x["role_id"])
                     self.queryToDB(sql)
-        if not updatedmessages:
+        if not updated_messages:
             for x in data["discord_updated_messages"]:
                 if x["server_id"] == server_id:
-                    channel = client.get_channel(x["message_channel_id"])
+                    channel = client.get_channel(x["channel_id"])
                     if channel:
+                        message = None
                         try:
                             message = await channel.fetch_message(x["message_id"])
-                            if message:
-                                message_type = x["message_type"]
-                                if message_type == "nightwave":
-                                    updatedmessages[message_type] = NightwaveMessage(message)
-                                elif message_type == "invasions":
-                                    updatedmessages[message_type] = InvasionMessage(message, [])
-                                elif message_type == "fissures":
-                                    updatedmessages[message_type] = FissureMessage(message, [])
-                                elif message_type == "sorties":
-                                    updatedmessages[message_type] = SortieMessage(message)
-                                elif message_type == "poe":
-                                    mention = next((i for i in notifications if i.name == "poe_night"), None)
-                                    updatedmessages[message_type] = CetusMessage(message, mention, client)
-                                elif message_type == "gtanw":
-                                    updatedmessages[message_type] = NewswireMessage(message)
                         except discord.NotFound:
                             self.queryToDB("DELETE FROM discord_updated_messages WHERE message_id={}".format(
                                 x["message_id"]
                             ))
-        self.runtime["servers"][server_id] = Server(server_id, serverdisc, logchannel, updatedmessages, notifications, joinableroles)
+                            self.queryToDB("DELETE FROM discord_role_messages WHERE message_id={}".format(
+                                x["message_id"]
+                            ))
+                            message = None
+                        if message:
+                            message_type = x["message_type"]
+                            if message_type == "nightwave":
+                                updated_messages[message_type] = NightwaveMessage(message)
+                            elif message_type == "invasions":
+                                updated_messages[message_type] = InvasionMessage(message, [])
+                            elif message_type == "fissures":
+                                updated_messages[message_type] = FissureMessage(message, [])
+                            elif message_type == "sorties":
+                                updated_messages[message_type] = SortieMessage(message)
+                            elif message_type == "poe":
+                                mention = next((i for i in notifications if i.name == "poe_night"), None)
+                                updated_messages[message_type] = CetusMessage(message, mention, client)
+                            elif message_type == "gtanw":
+                                updated_messages[message_type] = NewswireMessage(message)
+        server = Server(server_id, discord_server, logchannel, updated_messages, notifications, joinable_roles, role_messages)
+        self.runtime["servers"][server_id] = server
     async def update_runtime(self, client):
         data = self.getData()
 
-        if "gfl" in self.runtime.keys():
+        if "gfl" in self.runtime:
             self.gfl(data)
-        if "warframe" in self.runtime.keys():
+        if "warframe" in self.runtime:
             self.warframe(data)
     def gfl(self, data):
         self.runtime["gfl"]["dolls"].clear()

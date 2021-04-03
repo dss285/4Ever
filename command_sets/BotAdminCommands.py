@@ -28,5 +28,13 @@ class EvalCommand(Command):
         reg = re.match(pattern, message.content)
         if reg:
             if reg.group(2):
-                await message.reply(str(eval(reg.group(2))))
+                data = str(eval(reg.group(2)))
+                if len(data) < 2000:
+                    await message.reply(data)
+                else:
+                    fo = open("tmp.txt", "w")
+                    fo.write(data)
+                    fo.close()
+                    await message.reply(file=discord.File("tmp.txt"))
+
 

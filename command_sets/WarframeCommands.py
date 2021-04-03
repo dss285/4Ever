@@ -54,7 +54,8 @@ class WorldState(Command):
                     if new_message:
                         self.database.objectToDB(new_message)
                         msg_type = reg.group(2)
-                        server.updated_messages[msg_type] = new_message
+                        server.updated_messages["name"][msg_type] = new_message
+                        server.updated_messages["id"][new_message.id] = new_message
 class RelicSearch(Command):
     def __init__(self, command_key, droptables, client):
         self.client = client
