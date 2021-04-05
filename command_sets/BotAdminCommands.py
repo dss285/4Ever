@@ -7,6 +7,7 @@ import re
 
 class BotAdminCommands(Commands):
     def __init__(self, module_name, description, command_key, client, database):
+
         self.client = client
         self.database = database
         command_list = self.fetchCommands(command_key)

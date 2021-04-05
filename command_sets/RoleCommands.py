@@ -1,8 +1,11 @@
 import asyncio
 import discord
+
+from forever import Utilities
 from models.Commands import Commands
 from models.Command import Command
 from models.EmbedTemplate import EmbedTemplate
+
 import re
 
 class RoleCommands(Commands):
@@ -19,6 +22,7 @@ class RoleCommands(Commands):
         command_list["leave"] = Leave(command_key)
         command_list["add"] = Add(command_key, self.database)
         command_list["remove"] = Remove(command_key, self.database)
+        command_list["rolemessage"] = CreateRoleMessage(command_key, self.database, self.client)
         return command_list
 class Join(Command):
     def __init__(self, command_key):
@@ -71,8 +75,7 @@ class Add(Command):
                             self.database.queryToDB(sql)
                             server.joinable_roles["set"].add(i)
                             server.joinable_roles["id"][i.id] = i
-                            server.joinable_roles["name"][i.name] = i
-                        
+                            server.joinable_roles["name"][i.name] = i                      
 class Remove(Command):
     def __init__(self, command_key, database):
         self.database = database
@@ -102,3 +105,62 @@ class ListRoles(Command):
         if reg:
             em = EmbedTemplate(title="Role list", description="\n".join(server.joinable_roles["name"].keys()))
             await message.channel.send(embed=em)
+class CreateRoleMessage(Command):
+    def __init__(self, command_key, database, client):
+        self.client = client
+        self.database = database
+        super().__init__(command_key, "rolemessage", """Assign role reaction to message or send new message to be reacted.""", "{} {} {}".format(command_key, "rolemessage", "*<channel mention or id>*"), [])
+    async def run(self, message, server):
+        if message.author.guild_permissions.administrator:
+            pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s(\<?\#?\d+\>?)\s"
+            reg = re.match(pattern, message.content)
+            if reg:
+                channel = None
+                if message.channel_mentions:
+                    channel = message.channel_mentions[0]
+                else:
+                    try:
+                        channel = await self.client.fetch_channel(int(reg.group(2)))
+                    except discord.NotFound:
+                        channel = None
+                        await message.channel.send("> Channel couldn't be found")
+                role = None
+                if message.role_mentions:
+                    role = message.role_mentions[0]
+                else:
+                    role = server.discord_server.get_role(int(reg.group(3)))
+                if channel and role:
+
+                    try:
+                        await message.channel.send("> Which style")
+                        msg = await self.client.wait_for('message', check=lambda m: m.content in ['1', '2'] and m.author == message.author and m.channel == message.channel, timeout=60.0)
+                        if msg and msg.content == '1': # Existing message to have role reaction
+                            await message.channel.send("> Message ID, please")
+                            messageid = await self.client.wait_for('message', check=lambda m: Utilities.is_int(m.content) and m.channel == message.channel and m.author == message.author, timeout=60.0)
+                            if messageid:
+                                try:
+                                    role_msg = await channel.fetch_message(int(messageid.content))
+                                    await message.channel.send("> Reaction to be assigned, react to this message.")
+                                    reaction, user = await self.client.wait_for('reaction_add', check=lambda r, u: u.author == message.author, timeout=60.0)
+                                    if user and reaction:
+                                        server.joinable_roles["reactions"][role_msg.id] = {
+                                            "message" : role_msg,
+                                            "emoji" : str(reaction.emoji),
+                                            "role_id" : role.id
+                                        }
+                                        self.database.queryToDB("""
+                                        INSERT INTO discord_role_messages (role_id, message_id, channel_id, emoji, server_id)
+                                        VALUES ({}, {}, {}, '{}', {})""".format(role.id, role_msg.id, channel.id, str(reaction.emoji), server.discord_server.id))
+                                        await role_msg.add_reaction(reaction.emoji)
+                                except discord.NotFound:
+                                    await message.channel.send("> Message couldn't be found")
+                            else:
+                                await message.channel.send("> Command execution failed, wrong input")                      
+                        elif msg and msg.content == '2': # New message to have role reaction
+                            pass
+                        else:
+                            await message.channel.send("> Command execution failed, wrong input")
+                    except asyncio.TimeoutError:
+                        await message.channel.send("> Too slow")
+                else:
+                    await message.channel.send("> Command execution failed, wrong input")

@@ -1,6 +1,8 @@
 import pytz
 import aiohttp
 import time
+import asyncio
+import discord
 from datetime import datetime
 def utc2local(timestamp):
     local_tz = pytz.timezone("Europe/Helsinki")
@@ -15,4 +17,17 @@ async def fetchURL(url, params={}):
             else:
                 return None
 def ts2ifmodifiedsince(timestamp):
-    return time.strftime("%a, %d %b %Y %H:%M%S GMT", time.gmtime(timestamp)) 
+    return time.strftime("%a, %d %b %Y %H:%M%S GMT", time.gmtime(timestamp))
+
+def is_number(m):
+    try:
+        float(m)
+        return True
+    except ValueError:
+        return False
+def is_int(m):
+    try:
+        float(m)
+        return True
+    except ValueError:
+        return False

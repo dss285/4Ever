@@ -120,20 +120,22 @@ class Bot(discord.Client):
             await server.voice.skip()
             await server.voice.vc.disconnect()
     async def on_raw_reaction_add(self, payload):
-        if payload.guild_id:
-            server = self.database.runtime.get("servers").get(payload.guild_id)
-            if server:
-                if payload.message_id in server.joinable_roles["reactions"] and str(payload.emoji) == server.joinable_roles["reactions"][payload.message_id]["emoji"]:
-                    member = await server.discord_server.fetch_member(payload.user_id)
-                    await member.add_roles(server.joinable_roles["id"][server.joinable_roles["reactions"][payload.message_id]["role_id"]])
+        if payload.user_id != self.user.id:
+            if payload.guild_id:
+                server = self.database.runtime.get("servers").get(payload.guild_id)
+                if server:
+                    if payload.message_id in server.joinable_roles["reactions"] and str(payload.emoji) == server.joinable_roles["reactions"][payload.message_id]["emoji"]:
+                        member = await server.discord_server.fetch_member(payload.user_id)
+                        await member.add_roles(server.joinable_roles["id"][server.joinable_roles["reactions"][payload.message_id]["role_id"]])
 
     async def on_raw_reaction_remove(self, payload):
-        if payload.guild_id:
-            server = self.database.runtime.get("servers").get(payload.guild_id)
-            if server:
-                if payload.message_id in server.joinable_roles["reactions"] and str(payload.emoji) == server.joinable_roles["reactions"][payload.message_id]["emoji"]:
-                    member = await server.discord_server.fetch_member(payload.user_id)
-                    await member.remove_roles(server.joinable_roles["id"][server.joinable_roles["reactions"][payload.message_id]["role_id"]])
+        if payload.user_id != self.user.id:
+            if payload.guild_id:
+                server = self.database.runtime.get("servers").get(payload.guild_id)
+                if server:
+                    if payload.message_id in server.joinable_roles["reactions"] and str(payload.emoji) == server.joinable_roles["reactions"][payload.message_id]["emoji"]:
+                        member = await server.discord_server.fetch_member(payload.user_id)
+                        await member.remove_roles(server.joinable_roles["id"][server.joinable_roles["reactions"][payload.message_id]["role_id"]])
 
     async def on_raw_message_delete(self, payload):
         message = payload.cached_message
