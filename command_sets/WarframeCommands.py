@@ -52,8 +52,9 @@ class WorldState(Command):
                     elif reg.group(2) == "invasions":
                         new_message = InvasionMessage(msg)
                     if new_message:
-                        self.database.objectToDB(new_message)
+                        
                         msg_type = reg.group(2)
+                        self.database.create_updated_message(server.server_id, msg_type, msg.channel.id, msg.id)
                         server.updated_messages["name"][msg_type] = new_message
                         server.updated_messages["id"][new_message.id] = new_message
 class RelicSearch(Command):

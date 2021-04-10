@@ -8,7 +8,7 @@ import config
 
 from models.EmbedTemplate import EmbedTemplate
 
-from forever.Database import Database
+from forever.Database import Database_Manager
 from forever.Server import Server
 from forever.Newswire import Newswire
 from warframe.Worldstate import Worldstate
@@ -27,7 +27,7 @@ from command_sets.BotAdminCommands import BotAdminCommands
 class Bot(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.database = Database(config.host, config.user, config.password, config.database)
+        self.database = Database_Manager(config.host, config.user, config.password, config.database)
         self.worldstate = Worldstate()
         self.newswire = Newswire()
         self.command_key = "\u0024"
@@ -63,7 +63,7 @@ class Bot(discord.Client):
             await asyncio.sleep(60)
     async def database_loop(self,):
         await self.wait_until_ready()
-        await self.database.initRuntime(self)
+        await self.database.init_runtime(self)
         while True:
             await asyncio.sleep(3)
             if self.database.runtime["servers"]:
@@ -71,13 +71,13 @@ class Bot(discord.Client):
                 for x in self.guilds:
                     if x.id not in self.database.runtime["servers"]:
                         tmp = Server(x.id, x, None, {}, [], set(), {})
-                        self.database.objectToQuery(tmp)
+                        self.database.create_server(x.id)
                         self.database.runtime["servers"][x.id] = tmp
                     guilds.add(x.id)
                 
                 for i, j in self.database.runtime["servers"].items():
                     if i not in guilds:
-                        self.database.queryToDB(j.delete())
+                        self.database.delete_server(i)
                     if j.voice != None:
                         j.voice.update_sounds()
             await asyncio.sleep(10)
@@ -91,7 +91,7 @@ class Bot(discord.Client):
         #(self, server_id, discord_server, logchannel, updated_messages, notifications, joinable_roles, role_messages
         server = Server(guild.id, guild, None, {}, [], set(), {})
         self.database.runtime["servers"][guild.id] = server
-        self.database.objectToDB(server)
+        self.database.create_server(guild.id)
     async def on_message(self, message):
         try:
             server = self.database.runtime.get("servers").get(message.guild.id)
@@ -140,13 +140,10 @@ class Bot(discord.Client):
     async def on_raw_message_delete(self, payload):
         message = payload.cached_message
         if message:
-            server = self.database.runtime["servers"].get(message.guild.id)
-            if server:
-                queries = server.delete_message(message)
-                if queries:
-                    for i in queries:
-                        self.database.queryToDB(i)
-                        del server.joinable_roles["reactions"][message.id]
+            if message.id in self.database.saved_messages:
+                self.database.delete_updated_message(message.id)
+                self.database.delete_role_message(message.id)
+
 
         
     async def on_raw_bulk_message_delete(self, payload):

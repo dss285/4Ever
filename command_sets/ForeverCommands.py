@@ -56,7 +56,7 @@ class GTANewswire(Command):
                 em = EmbedTemplate(title="GTANW Message", description="Updating soon..")
                 msg = await message.channel.send(embed=em)
                 nwmessage = NewswireMessage(msg)
-                self.database.objectToDB(nwmessage)
+                self.database.create_updated_message(msg.guild.id, "gtanw", msg.channel.id, msg.id)
                 server.updated_messages["name"]["gtanw"] = nwmessage
                 server.updated_messages["id"][nwmessage.id] = nwmessage
             else:

@@ -68,11 +68,7 @@ class Add(Command):
                 if reg.group(2):
                     for i in message.role_mentions:
                         if i not in server.joinable_roles["set"]:
-                            sql = """INSERT INTO discord_joinable_roles (role_id, server_id) VALUES ({}, {})""".format(
-                                i.id,
-                                server.server_id
-                            )
-                            self.database.queryToDB(sql)
+                            self.database.create_joinable_role(i.id, server.server_id)
                             server.joinable_roles["set"].add(i)
                             server.joinable_roles["id"][i.id] = i
                             server.joinable_roles["name"][i.name] = i                      
@@ -88,11 +84,7 @@ class Remove(Command):
                 if reg.group(2):
                     for i in message.role_mentions:
                         if i in server.joinable_roles["set"]:
-                            sql = "DELETE FROM discord_joinable_roles WHERE role_id={} AND server_id={}".format(
-                                i.id,
-                                server.server_id
-                            )
-                            self.database.queryToDB(sql)
+                            self.database.delete_joinable_role(i.id)
                             server.joinable_roles["set"].remove(i)
                             del server.joinable_roles["id"][i.id]
                             del server.joinable_roles["name"][i.name]
@@ -148,9 +140,7 @@ class CreateRoleMessage(Command):
                                             "emoji" : str(reaction.emoji),
                                             "role_id" : role.id
                                         }
-                                        self.database.queryToDB("""
-                                        INSERT INTO discord_role_messages (role_id, message_id, channel_id, emoji, server_id)
-                                        VALUES ({}, {}, {}, '{}', {})""".format(role.id, role_msg.id, channel.id, str(reaction.emoji), server.discord_server.id))
+                                        self.database.create_role_message(role.id, role_msg.id, channel.id, str(reaction.emoji), server.server_id)
                                         await role_msg.add_reaction(reaction.emoji)
                                 except discord.NotFound:
                                     await message.channel.send("> Message couldn't be found")
