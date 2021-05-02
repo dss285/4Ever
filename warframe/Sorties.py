@@ -12,4 +12,6 @@ class SortieMission:
         self.node = node
         self.modifier = modifier
     def __str__(self,):
+        if type(self.node) == str:
+            return "{}\n{}\n{}".format(self.missionType, self.node, self.modifier)
         return "{}\n{}\n{}".format(self.missionType, self.node.name.title()+", "+self.node.planet.name.title(), self.modifier)

@@ -1,4 +1,3 @@
-import discord
 class BotMention:
     def __init__(self, name, role):
         self.name = name

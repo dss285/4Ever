@@ -126,20 +126,14 @@ class Database_Manager(Database):
                     joinable_roles.add(role)
                 else:
                     self.delete_joinable_role(x["role_id"])
-        # for x in data["discord_notifications"]:
-            # print("asd")
-            # if x["server_id"] == server_id:
-                # role = discord_server.get_role(x["role_id"])
-                # if role:
-                    # print("ok11")
-                    # print(role)
-                    # bot_mention = BotMention(x["name"], role)
-                    # print("ok22")
-                    # notifications.append(bot_mention)
-                    # print("ok33")
-                # else:
-                    # print("ok")
-                    # self.delete_notification(x["name"], x["server_id"])
+        for x in data["discord_notifications"]:
+            if x["server_id"] == server_id:
+                role = discord_server.get_role(x["role_id"])
+                if role:
+                    bot_mention = BotMention(x["notification_name"], role)
+                    notifications.append(bot_mention)
+                else:
+                    self.delete_notification(x["notification_name"], x["server_id"])
         if not updated_messages:
             for x in data["discord_updated_messages"]:
                 if x["server_id"] == server_id:
@@ -187,7 +181,7 @@ class Database_Manager(Database):
             d["formation_tiles"],
             d["skill"],
             d["aliases"].split("|") if d["aliases"] else [],
-            d["productiontimer"])
+            d["production_timer"])
             self.runtime["gfl"]["dolls"].append(doll)
     def warframe(self, data):
         self.runtime["warframe"]["translate"]["solsystem"]["planets"].clear()

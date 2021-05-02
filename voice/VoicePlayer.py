@@ -6,6 +6,7 @@ import os
 import glob
 import json
 import datetime
+from collections import deque
 from models.EmbedTemplate import EmbedTemplate
 class Song:
 	def __init__(self, data, title, duration, views, url):
@@ -36,8 +37,11 @@ class VoicePlayer:
 			'options' : '-vn',
 			'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5'
 		}
+		self.ffmpeg_local_opts = {
+			'options' : '-vn'
+		}
 		self.ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
-		self.playlist = []
+		self.playlist = deque()
 		self.looprunning = False
 		self.vc = vc
 		self.channel = channel
@@ -49,7 +53,7 @@ class VoicePlayer:
 	async def playFile(self, fileName):
 		while self.vc.is_playing():
 			await asyncio.sleep(3)
-		self.vc.play(discord.FFmpegPCMAudio(fileName, **self.ffmpeg_opts))
+		self.vc.play(discord.FFmpegPCMAudio(fileName, **self.ffmpeg_local_opts))
 	async def handle(self, url):
 		if self.vc != None:
 			if url:
@@ -59,7 +63,7 @@ class VoicePlayer:
 	async def play_loop(self,):
 		self.looprunning = True
 		while self.playlist:
-			song = self.playlist.pop(len(self.playlist)-1)
+			song = self.playlist.popleft()
 			if song:
 				self.vc.play(song.data)
 			while self.vc.is_playing():
@@ -85,20 +89,20 @@ class VoicePlayer:
 	async def add_to_queue(self,url):
 		def add_playlist(data, new_songs):
 			for x in data['entries']:
-				song = Song(discord.FFmpegPCMAudio(x['url'], **self.ffmpeg_opts), x['title'], x['duration'], x['views'], x['url'])
+				song = Song(discord.FFmpegPCMAudio(x['url'], **self.ffmpeg_opts), x['title'], x['duration'], x['view_count'], x['url'])
 				new_songs.append(song)
 		data = await self.loop.run_in_executor(None, lambda: self.ytdl.extract_info(url, download=False))
 		new_songs = []
 		if 'entries' in data:
 			await self.loop.run_in_executor(None, lambda: add_playlist(data, new_songs))
 		else:
-			song = Song(discord.FFmpegPCMAudio(data['url'], **self.ffmpeg_opts), data['title'], data['duration'], data['views'], data['url'])
+			song = Song(discord.FFmpegPCMAudio(data['url'], **self.ffmpeg_opts), data['title'], data['duration'], data.get('view_count'), data.get('url'))
 
 			new_songs.append(song)
 		new_songs_str = ""
 		for i in new_songs:
 			if len(new_songs_str) < 1000:
-				new_songs_str += "[{}]({}), {} {:,} views\n".format(i.title[:40], i.url, datetime.timedelta(seconds=i.duration), i.views)
+				new_songs_str += "[{}]({}), {} {:,.0f} views\n".format(i.title[:40], i.url, datetime.timedelta(seconds=i.duration), i.views)
 			else:
 				break
 		self.playlist.extend(new_songs)

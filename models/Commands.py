@@ -11,7 +11,14 @@ class Commands:
     def __help(self,):
         desc_string = self.description+"\n\n"
         for i in self.command_list.values():
-            desc_string += "{} {}  -  {}\nUsage: {}\n\n".format(self.command_key, i.name, i.description, i.usage)
+            desc_string += """
+            **Command:**
+            {} {}  -  {}
+            **Usage:**
+            {}
+            **Aliases:**
+            ```{}```
+            """.format(self.command_key, i.name, i.description, i.usage, ",".join(i.aliases))
         embed = EmbedTemplate(title=self.module_name, description=desc_string)
         return embed
     async def parse(self, message, server):

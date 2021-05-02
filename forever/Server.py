@@ -27,6 +27,7 @@ class Server:
         for message_id, message in self.updated_messages["id"].items():
             try:
                 await message.refresh(data[message.message_type])
+
             except discord.NotFound:
                 pass
     def __repr__(self):

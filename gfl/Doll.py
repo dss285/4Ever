@@ -21,10 +21,10 @@ class Doll:
         
         em.add_field(name="Skill", value=self.skill if self.skill else "N/A")
         if self.formation_bonus and self.formation_tiles:
-            formation_tiles = self.formation_tiles.replace("0", "⬛").replace("1", "⬜").replace("2", "🟦")
+            formation_tiles = self.formation_tiles.replace("0", "⬛").replace("1", "⬜").replace("2", "🟦").replace("\\r\\n", "\r\n")
             em.add_field(
                 name="Formation",
-                value="{}\n\n{}".format(formation_tiles, self.formation_bonus),
+                value="{}\n\n{}".format(formation_tiles, self.formation_bonus.replace("\\r\\n", "\r\n")),
                 inline=False
             )
         return em

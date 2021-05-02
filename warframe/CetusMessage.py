@@ -16,7 +16,7 @@ class CetusMessage(UpdatedMessage):
     async def refresh(self, cetus):
         em = EmbedTemplate(title="Plains of Eidolon", timestamp=datetime.utcnow())
         em.add_field(name="Status", value=str(cetus))
-        em.add_field(name="Time until new rotation", value="{:.0f} min".format(cetus.minutes_left()))
+        em.add_field(name="Time until new rotation", value="{:.0f} min".format(cetus.minutes_left() if cetus else 0.00))
         await self.message.edit(embed=em)
         if not self.lock:
             if cetus.isNight() and self.mention:

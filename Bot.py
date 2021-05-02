@@ -46,41 +46,35 @@ class Bot(discord.Client):
         self.basic_task = self.loop.create_task(self.basic_loop())
     async def basic_loop(self,):
         await self.wait_until_ready()
-        while True:
-            try:
-                await self.worldstate.getData(self.database.runtime)
-                await self.newswire.getData()
-                gtadata = {"gtanw" : self.newswire.nw_items.values()}
-                data = {**gtadata, **self.worldstate.runtime}
-                for i in self.database.runtime["servers"].values():
-                    await asyncio.sleep(2)
-                    await i.updateMessages(data, self.database)
-                        
-            except Exception as e:
-                print("Error, logged")
-                log(["[BASE LOOP][{}] {}".format(time.time(), e), traceback.format_exc()+"\n\n"])
-
-            await asyncio.sleep(60)
-    async def database_loop(self,):
-        await self.wait_until_ready()
         await self.database.init_runtime(self)
         while True:
-            await asyncio.sleep(3)
-            if self.database.runtime["servers"]:
-                guilds = set()
+            try:
+                guilds = set(self.guilds)
+
+                                    
                 for x in self.guilds:
                     if x.id not in self.database.runtime["servers"]:
                         tmp = Server(x.id, x, None, {}, [], set(), {})
                         self.database.create_server(x.id)
                         self.database.runtime["servers"][x.id] = tmp
-                    guilds.add(x.id)
                 
                 for i, j in self.database.runtime["servers"].items():
                     if i not in guilds:
                         self.database.delete_server(i)
                     if j.voice != None:
                         j.voice.update_sounds()
-            await asyncio.sleep(10)
+                await self.worldstate.getData(self.database.runtime)
+                await self.newswire.getData()
+                gtadata = {"gtanw" : self.newswire.nw_items.values()}
+                data = {**gtadata, **self.worldstate.runtime}
+                await asyncio.sleep(2)
+                for i in self.database.runtime["servers"].values():
+                    self.loop.create_task(i.updateMessages(data, self.database))
+            except Exception as e:
+                print("Error, logged")
+                log(["[BASE LOOP][{}] {}".format(time.time(), e), traceback.format_exc()+"\n\n"])
+
+            await asyncio.sleep(120)
     async def on_ready(self,):
         print("Everythings ready")
         print(discord.__version__)
@@ -147,8 +141,9 @@ class Bot(discord.Client):
 
         
     async def on_raw_bulk_message_delete(self, payload):
-        if len(payload.message_ids) == len(payload.cached_messages):
-            message = payload.cached_messages
+        em = EmbedTemplate(title="Message Purge". description="{} message(s) were purged")
+
+
     async def on_message_edit(self, before, after):
         if before.author != self.user:
             if before != after:

@@ -12,6 +12,12 @@ class FissureItem:
     def expiresIn(self,):
         return self.expiry_time-time.time()
     def __str__(self,):
+        if type(self.node) == str:
+            return "{}\n{}\nExpires in {:.0f} min".format(
+            self.node.title()+", "+self.node.title(), 
+            "Expires on {}".format(Utilities.ts2string(self.expiry_time)),
+            self.expiresIn()//60
+            )
         return "{}\n{}\nExpires in {:.0f} min".format(
             self.node.planet.name.title()+", "+self.node.name.title(), 
             "Expires on {}".format(Utilities.ts2string(self.expiry_time)),
