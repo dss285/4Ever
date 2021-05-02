@@ -42,7 +42,6 @@ class Bot(discord.Client):
             "gfl" :         GFLCommands("Girls' Frontline", "GFL Module", self.command_key+"gfl", self, self.database),
             "nsfw" :        NSFWCommands("NSFW", "NSFW Module", self.command_key+"nsfw")
         }
-        self.database_task = self.loop.create_task(self.database_loop())
         self.basic_task = self.loop.create_task(self.basic_loop())
     async def basic_loop(self,):
         await self.wait_until_ready()
@@ -141,7 +140,7 @@ class Bot(discord.Client):
 
         
     async def on_raw_bulk_message_delete(self, payload):
-        em = EmbedTemplate(title="Message Purge". description="{} message(s) were purged")
+        em = EmbedTemplate(title="Message Purge", description="{} message(s) were purged")
 
 
     async def on_message_edit(self, before, after):
