@@ -1,3 +1,4 @@
+from re import M
 import discord
 import asyncio
 from datetime import datetime
@@ -27,7 +28,7 @@ from command_sets.BotAdminCommands import BotAdminCommands
 class Bot(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.database = Database_Manager(config.host, config.user, config.password, config.database)
+        self.database = Database_Manager(config.host, config.user, config.password, config.database, self)
         self.worldstate = Worldstate()
         self.newswire = Newswire()
         self.command_key = "\u0024"
@@ -43,25 +44,13 @@ class Bot(discord.Client):
             "nsfw" :        NSFWCommands("NSFW", "NSFW Module", self.command_key+"nsfw")
         }
         self.basic_task = self.loop.create_task(self.basic_loop())
+        self.server_sync_task = None
     async def basic_loop(self,):
         await self.wait_until_ready()
         await self.database.init_runtime(self)
+        self.server_sync_task = self.loop.create_task(self.server_sync())
         while True:
             try:
-                guilds = set(self.guilds)
-
-                                    
-                for x in self.guilds:
-                    if x.id not in self.database.runtime["servers"]:
-                        tmp = Server(x.id, x, None, {}, [], set(), {})
-                        self.database.create_server(x.id)
-                        self.database.runtime["servers"][x.id] = tmp
-                
-                for i, j in self.database.runtime["servers"].items():
-                    if i not in guilds:
-                        self.database.delete_server(i)
-                    if j.voice != None:
-                        j.voice.update_sounds()
                 await self.worldstate.getData(self.database.runtime)
                 await self.newswire.getData()
                 gtadata = {"gtanw" : self.newswire.nw_items.values()}
@@ -71,9 +60,26 @@ class Bot(discord.Client):
                     self.loop.create_task(i.updateMessages(data, self.database))
             except Exception as e:
                 print("Error, logged")
-                log(["[BASE LOOP][{}] {}".format(time.time(), e), traceback.format_exc()+"\n\n"])
+                log(["[BASE LOOP][{}] {}".format(time.time(), e), traceback.format_exc()+"\r\n"])
 
             await asyncio.sleep(120)
+    async def server_sync(self,):
+        await self.wait_until_ready()
+        while not self.database.init_done:
+            await asyncio.sleep(5)
+        while True:
+            guilds = set(self.guilds)
+            for x in self.guilds:
+                if x.id not in self.database.runtime["servers"]:
+                    tmp = Server(x.id, x, None, {}, [], set(), {})
+                    self.database.create_server(x.id)
+                    self.database.runtime["servers"][x.id] = tmp
+            for i, j in self.database.runtime["servers"].items():
+                if j.discord_server not in guilds:
+                    self.database.delete_server(i)
+                if j.voice != None:
+                    j.voice.update_sounds()
+            await asyncio.sleep(15)
     async def on_ready(self,):
         print("Everythings ready")
         print(discord.__version__)
@@ -105,7 +111,7 @@ class Bot(discord.Client):
                 await message.channel.send(embed=em)
         except Exception as e:
             print("Error, logged")
-            log(["[COMMANDS][{}] {}".format(time.time(), e), traceback.format_exc()+"\n\n"])
+            log(["[COMMANDS][{}] {}".format(time.time(), e), traceback.format_exc()+"\r\n"])
     async def on_voice_state_update(self, member, before, after):
         server = self.database.runtime["servers"].get(member.guild.id)
         if server and server.voice and len(server.voice.vc.channel.members) == 1:
@@ -135,14 +141,9 @@ class Bot(discord.Client):
         if message:
             if message.id in self.database.saved_messages:
                 self.database.delete_updated_message(message.id)
-                self.database.delete_role_message(message.id)
-
-
-        
+                self.database.delete_role_message(message.id)  
     async def on_raw_bulk_message_delete(self, payload):
         em = EmbedTemplate(title="Message Purge", description="{} message(s) were purged")
-
-
     async def on_message_edit(self, before, after):
         if before.author != self.user:
             if before != after:
@@ -165,9 +166,11 @@ class Bot(discord.Client):
         pass
 
 def log(messages, file="log.txt"):
+    if type(messages) is str:
+        messages = [messages]
     fo = open("log.txt", "a+")
     for i in messages:
-        fo.write(i)
+        fo.write(str(i)+"\n")
     fo.close()
             
 if __name__ == "__main__":

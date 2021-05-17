@@ -4,11 +4,11 @@ import discord
 import json
 from forever.Database import Database
 from forever import Utilities
-from warframe.NightwaveItem import NightwaveItem
-from warframe.FissureItem import FissureItem
-from warframe.CetusStatus import CetusStatus
-import warframe.InvasionItem as InvItem
-import warframe.Sorties as Sorties
+from warframe.NightwaveMessage import NightwaveItem
+from warframe.FissureMessage import FissureItem
+from warframe.CetusMessage import CetusStatus
+from warframe.InvasionMessage import InvasionItem, InvasionOpp
+import warframe.SortieMessage as Sorties
 class Worldstate():
     def __init__(self):
         self.runtime = {}
@@ -52,9 +52,9 @@ class Worldstate():
                 current = invasion["Count"]+invasion["Goal"]
                 fraction_attacker = round(current/goal*100,1)
                 fraction_defender = round((goal-current)/goal*100,1)
-                attacker = InvItem.InvasionOpp(attack_faction, attack_reward)
-                defender = InvItem.InvasionOpp(defender_faction, defender_reward)
-                self.runtime["invasions"].append(InvItem.InvasionItem(attacker, defender, node, Utilities.ts2string(start_time), "{}% vs {}%".format(fraction_defender, fraction_attacker)))
+                attacker = InvasionOpp(attack_faction, attack_reward)
+                defender = InvasionOpp(defender_faction, defender_reward)
+                self.runtime["invasions"].append(InvasionItem(attacker, defender, node, Utilities.ts2string(start_time), "{}% vs {}%".format(fraction_defender, fraction_attacker)))
     def getNightwave(self, parsing, data_runtime):
         translate = data_runtime["warframe"]["translate"]
         for nightwave in parsing["SeasonInfo"]["ActiveChallenges"]:

@@ -3,9 +3,15 @@ import asyncio
 import time
 from datetime import datetime
 from forever import Utilities
-from warframe.NightwaveItem import NightwaveItem
 from models.UpdatedMessage import UpdatedMessage
 from models.EmbedTemplate import EmbedTemplate
+class NightwaveItem:
+    def __init__(self, start_time, expiry_time, name, daily=False):
+        self.start_time = start_time
+        self.expiry_time = expiry_time
+        self.name = name
+        self.daily = daily
+
 class NightwaveMessage(UpdatedMessage):
     def __init__(self, message):
         super().__init__(message, "nightwave")

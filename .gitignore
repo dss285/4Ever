@@ -136,7 +136,7 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
-
+.vscode
 log.txt
 sounds/*
 videos/*

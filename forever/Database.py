@@ -10,16 +10,20 @@ from warframe.NightwaveMessage import NightwaveMessage
 from warframe.InvasionMessage import InvasionMessage
 from forever.NewswireMessage import NewswireMessage
 
-from warframe.SolNode import SolNode
-from warframe.SolPlanet import SolPlanet
+from warframe.SolSystem import SolNode, SolPlanet
 from forever.Server import Server
 from gfl.Doll import Doll
+def run_in_executor(function):
+    def __decorator(self, *args, **kwargs):
+        return self.client.loop.run_in_executor(function(*args, **kwargs))
+    return __decorator
 class Database:
-    def __init__(self, host, user, password, database):
+    def __init__(self, host, user, password, database, client):
         self.host = host
         self.user = user
         self.password = password
         self.database = database
+        self.client = client
         self.shared = "shared"
         self.forever = "forever"
         self.tables = {
@@ -55,6 +59,7 @@ class Database:
                                   password=self.password,
                                   database=self.database,
                                   port=5432)
+    @run_in_executor
     def query(self, sql):
         with self.connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
             cursor.execute(sql)
@@ -73,11 +78,12 @@ class Database:
         self.connection.commit()
         return results
 class Database_Manager(Database):
-    def __init__(self, host, user, password, database):
-        super().__init__(host, user, password, database)
+    def __init__(self, host, user, password, database, client):
+        super().__init__(host, user, password, database, client)
         self.runtime = {}
         self.saved_messages = set()
         self.mentions = []
+        self.init_done = False
     def structure(self,):
         self.runtime["warframe"] = {}
         self.runtime["warframe"]["nightwave"] = []
@@ -134,33 +140,32 @@ class Database_Manager(Database):
                     notifications.append(bot_mention)
                 else:
                     self.delete_notification(x["notification_name"], x["server_id"])
-        if not updated_messages:
-            for x in data["discord_updated_messages"]:
-                if x["server_id"] == server_id:
-                    channel = client.get_channel(x["channel_id"])
-                    if channel:
+        for x in data["discord_updated_messages"]:
+            if x["server_id"] == server_id:
+                channel = client.get_channel(x["channel_id"])
+                if channel:
+                    message = None
+                    try:
+                        message = await channel.fetch_message(x["message_id"])
+                    except discord.NotFound:
+                        self.delete_role_message(x["message_id"])
+                        self.delete_updated_message(x["message_id"])
                         message = None
-                        try:
-                            message = await channel.fetch_message(x["message_id"])
-                        except discord.NotFound:
-                            self.delete_role_message(x["message_id"])
-                            self.delete_updated_message(x["message_id"])
-                            message = None
-                        if message:
-                            message_type = x["message_type"]
-                            if message_type == "nightwave":
-                                updated_messages[message_type] = NightwaveMessage(message)
-                            elif message_type == "invasions":
-                                updated_messages[message_type] = InvasionMessage(message, [])
-                            elif message_type == "fissures":
-                                updated_messages[message_type] = FissureMessage(message, [])
-                            elif message_type == "sorties":
-                                updated_messages[message_type] = SortieMessage(message)
-                            elif message_type == "poe":
-                                mention = next((i for i in notifications if i.name == "poe_night"), None)
-                                updated_messages[message_type] = CetusMessage(message, mention, client)
-                            elif message_type == "gtanw":
-                                updated_messages[message_type] = NewswireMessage(message)
+                    if message:
+                        message_type = x["message_type"]
+                        if message_type == "nightwave":
+                            updated_messages[message_type] = NightwaveMessage(message)
+                        elif message_type == "invasions":
+                            updated_messages[message_type] = InvasionMessage(message, [])
+                        elif message_type == "fissures":
+                            updated_messages[message_type] = FissureMessage(message, [])
+                        elif message_type == "sorties":
+                            updated_messages[message_type] = SortieMessage(message)
+                        elif message_type == "poe":
+                            mention = next((i for i in notifications if i.name == "poe_night"), None)
+                            updated_messages[message_type] = CetusMessage(message, mention, client)
+                        elif message_type == "gtanw":
+                            updated_messages[message_type] = NewswireMessage(message)
         server = Server(server_id, discord_server, logchannel, updated_messages, notifications, joinable_roles, role_messages)
         self.runtime["servers"][server_id] = server
     async def update_runtime(self, client):
@@ -209,6 +214,7 @@ class Database_Manager(Database):
         self.gfl(data)
         #WF Translation
         self.warframe(data)
+        self.init_done = True
     def delete_joinable_role(self, role_id):
         self.query(self.query_formats["delete_where"].format(
             schema=self.forever,
@@ -255,7 +261,7 @@ class Database_Manager(Database):
             schema=self.forever,
             table="discord_notifications",
             column_1="name",
-            value_1="\"{}\"".format(name),
+            value_1="\"{}\"".format(notification_name),
             column_2="server_id",
             value_2=server_id
         ))
@@ -301,6 +307,3 @@ class Database_Manager(Database):
             columns="server_id",
             values="{}".format(server_id)
         ))
-
-if __name__ == "__main__":
-    db = Database("localhost", "dss285", "aeon123", "aeon")
