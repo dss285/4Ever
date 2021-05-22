@@ -204,9 +204,10 @@ class Database_Manager(Database):
             next(planet for planet in self.runtime["warframe"]["translate"]["solsystem"]["planets"] if planet.id == item["planet_id"])))
     def dota(self, data):
         match_players = {}
-        dota_heroes = {}
+        dota_heroes = {"id" : {}, "name" : {}}
         for i in data["dota_heroes"]:
-            dota_heroes[i["id"]] = i["name"]
+            dota_heroes["id"][i["id"]] = i["name"]
+            dota_heroes["name"][i["name"]] = i["id"]
         for i in data["dota_matches_players"]:
             if i["match_id"] not in match_players:
                 match_players[i["match_id"]] = {"players" : {"dire" : {}, "radiant" : {}}, "radiant_team_ids" : set(), "dire_team_ids" : set()}

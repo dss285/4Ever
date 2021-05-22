@@ -233,8 +233,8 @@ class Steam_API():
             )
             return match
         return None
-    async def get_complete_account(self, steam_64id, turbo_only=True):
+    async def get_complete_account(self, steam_64id, hero_id=None, turbo_only=True):
         steam_32id = self.steam_64bit_id_to_32bit(steam_64id)
-        match_history, new_matches = await self.get_dota_player_match_history(steam_32id, None, 23 if turbo_only else None)
+        match_history, new_matches = await self.get_dota_player_match_history(steam_32id, hero_id, 23 if turbo_only else None)
         steam_profile = await self.get_steam_profile(steam_64id)
         return (Complete_Account(steam_profile, match_history), new_matches)
