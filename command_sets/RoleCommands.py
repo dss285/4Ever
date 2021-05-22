@@ -68,7 +68,7 @@ class Add(Command):
                 if reg.group(2):
                     for i in message.role_mentions:
                         if i not in server.joinable_roles["set"]:
-                            self.database.create_joinable_role(i.id, server.server_id)
+                            await self.database.create_joinable_role(i.id, server.server_id)
                             server.joinable_roles["set"].add(i)
                             server.joinable_roles["id"][i.id] = i
                             server.joinable_roles["name"][i.name] = i                      
@@ -84,7 +84,7 @@ class Remove(Command):
                 if reg.group(2):
                     for i in message.role_mentions:
                         if i in server.joinable_roles["set"]:
-                            self.database.delete_joinable_role(i.id)
+                            await self.database.delete_joinable_role(i.id)
                             server.joinable_roles["set"].remove(i)
                             del server.joinable_roles["id"][i.id]
                             del server.joinable_roles["name"][i.name]
@@ -140,7 +140,7 @@ class CreateRoleMessage(Command):
                                             "emoji" : str(reaction.emoji),
                                             "role_id" : role.id
                                         }
-                                        self.database.create_role_message(role.id, role_msg.id, channel.id, str(reaction.emoji), server.server_id)
+                                        await self.database.create_role_message(role.id, role_msg.id, channel.id, str(reaction.emoji), server.server_id)
                                         await role_msg.add_reaction(reaction.emoji)
                                 except discord.NotFound:
                                     await message.channel.send("> Message couldn't be found")

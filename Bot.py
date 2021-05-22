@@ -9,11 +9,12 @@ import config
 
 from models.EmbedTemplate import EmbedTemplate
 
+from forever.Utilities import log
 from forever.Database import Database_Manager
 from forever.Server import Server
-from forever.Newswire import Newswire
-from warframe.Worldstate import Worldstate
-from warframe.DropTables import DropTables
+from forever.NewswireMessage import Newswire
+from forever.Warframe import Worldstate, DropTables
+from forever.Steam import Steam_API
 
 from command_sets.VoiceCommands import VoiceCommands
 from command_sets.ModerationCommands import ModerationCommands
@@ -24,12 +25,14 @@ from command_sets.GFLCommands import GFLCommands
 from command_sets.NSFWCommands import NSFWCommands
 from command_sets.RoleCommands import RoleCommands
 from command_sets.BotAdminCommands import BotAdminCommands
+from command_sets.SteamCommands import SteamCommands
 
 class Bot(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.database = Database_Manager(config.host, config.user, config.password, config.database, self)
         self.worldstate = Worldstate()
+        self.steam_api = Steam_API("http://api.steampowered.com", config.steam_api_key)
         self.newswire = Newswire()
         self.command_key = "\u0024"
         self.commands = {
@@ -39,8 +42,9 @@ class Bot(discord.Client):
             "role" :        RoleCommands("Role", "This module has all the role commands", self.command_key+"role", self, self.database),
             "math" :        MathCommands("Math", "This module has math commands", self.command_key+"math", self),
             "warframe" :    WarframeCommands("Warframe", "Warframe module", self.command_key+"wf", self, self.database),
-            "forever" :     ForeverCommands("Forever", "Main module of the bot", self.command_key+"fe", self, self.database, self.newswire),
             "gfl" :         GFLCommands("Girls' Frontline", "GFL Module", self.command_key+"gfl", self, self.database),
+            "steam" :       SteamCommands("Steam", "Steam Module", self.command_key+"steam", self, self.database, self.steam_api),
+            "forever" :     ForeverCommands("Forever", "Main module of the bot", self.command_key+"fe", self, self.database, self.newswire),
             "nsfw" :        NSFWCommands("NSFW", "NSFW Module", self.command_key+"nsfw")
         }
         self.basic_task = self.loop.create_task(self.basic_loop())
@@ -52,13 +56,16 @@ class Bot(discord.Client):
         while True:
             try:
                 await self.worldstate.getData(self.database.runtime)
+
                 await self.newswire.getData()
+
                 gtadata = {"gtanw" : self.newswire.nw_items.values()}
                 data = {**gtadata, **self.worldstate.runtime}
                 await asyncio.sleep(2)
                 for i in self.database.runtime["servers"].values():
                     self.loop.create_task(i.updateMessages(data, self.database))
             except Exception as e:
+                
                 print("Error, logged")
                 log(["[BASE LOOP][{}] {}".format(time.time(), e), traceback.format_exc()+"\r\n"])
 
@@ -72,11 +79,11 @@ class Bot(discord.Client):
             for x in self.guilds:
                 if x.id not in self.database.runtime["servers"]:
                     tmp = Server(x.id, x, None, {}, [], set(), {})
-                    self.database.create_server(x.id)
+                    await self.database.create_server(x.id)
                     self.database.runtime["servers"][x.id] = tmp
             for i, j in self.database.runtime["servers"].items():
                 if j.discord_server not in guilds:
-                    self.database.delete_server(i)
+                    await self.database.delete_server(i)
                 if j.voice != None:
                     j.voice.update_sounds()
             await asyncio.sleep(15)
@@ -90,7 +97,7 @@ class Bot(discord.Client):
         #(self, server_id, discord_server, logchannel, updated_messages, notifications, joinable_roles, role_messages
         server = Server(guild.id, guild, None, {}, [], set(), {})
         self.database.runtime["servers"][guild.id] = server
-        self.database.create_server(guild.id)
+        await self.database.create_server(guild.id)
     async def on_message(self, message):
         try:
             server = self.database.runtime.get("servers").get(message.guild.id)
@@ -140,8 +147,8 @@ class Bot(discord.Client):
         message = payload.cached_message
         if message:
             if message.id in self.database.saved_messages:
-                self.database.delete_updated_message(message.id)
-                self.database.delete_role_message(message.id)  
+                await self.database.delete_updated_message(message.id)
+                await self.database.delete_role_message(message.id)  
     async def on_raw_bulk_message_delete(self, payload):
         em = EmbedTemplate(title="Message Purge", description="{} message(s) were purged")
     async def on_message_edit(self, before, after):
@@ -165,13 +172,7 @@ class Bot(discord.Client):
     async def on_member_ban(self, guild, user):
         pass
 
-def log(messages, file="log.txt"):
-    if type(messages) is str:
-        messages = [messages]
-    fo = open("log.txt", "a+")
-    for i in messages:
-        fo.write(str(i)+"\n")
-    fo.close()
+
             
 if __name__ == "__main__":
     bot = Bot()

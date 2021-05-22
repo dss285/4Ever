@@ -5,12 +5,7 @@ from models.Commands import Commands
 from models.Command import Command
 from models.EmbedTemplate import EmbedTemplate
 
-from warframe.DropTables import DropTables
-from warframe.CetusMessage import CetusMessage
-from warframe.SortieMessage import SortieMessage
-from warframe.FissureMessage import FissureMessage
-from warframe.InvasionMessage import InvasionMessage
-from warframe.NightwaveMessage import NightwaveMessage
+from forever.Warframe import DropTables, CetusMessage, SortieMessage, FissureMessage, InvasionMessage, NightwaveMessage
 import re
 
 class WarframeCommands(Commands):
@@ -46,17 +41,17 @@ class WorldState(Command):
                     elif reg.group(2) == "sorties":
                         new_message = SortieMessage(msg)
                     elif reg.group(2) == "fissures":
-                        new_message = FissureMessage(msg)
+                        new_message = FissureMessage(msg, [])
                     elif reg.group(2) == "poe":
-                        new_message = CetusMessage(msg)
+                        new_message = CetusMessage(msg, [])
                     elif reg.group(2) == "invasions":
-                        new_message = InvasionMessage(msg)
+                        new_message = InvasionMessage(msg, [])
                     if new_message:
                         
                         msg_type = reg.group(2)
-                        self.database.create_updated_message(server.server_id, msg_type, msg.channel.id, msg.id)
+                        await self.database.create_updated_message(server.server_id, msg_type, msg.channel.id, msg.id)
                         server.updated_messages["name"][msg_type] = new_message
-                        server.updated_messages["id"][new_message.id] = new_message
+                        server.updated_messages["id"][msg.id] = new_message
 class RelicSearch(Command):
     def __init__(self, command_key, droptables, client):
         self.client = client

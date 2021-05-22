@@ -1,8 +1,7 @@
 import asyncio
 import discord
 from forever.CrissCross import CrissCross as CC
-from forever.Newswire import Newswire
-from forever.NewswireMessage import NewswireMessage
+from forever.NewswireMessage import NewswireMessage, Newswire
 from models.Commands import Commands
 from models.Command import Command
 from models.EmbedTemplate import EmbedTemplate
@@ -56,7 +55,7 @@ class GTANewswire(Command):
                 em = EmbedTemplate(title="GTANW Message", description="Updating soon..")
                 msg = await message.channel.send(embed=em)
                 nwmessage = NewswireMessage(msg)
-                self.database.create_updated_message(msg.guild.id, "gtanw", msg.channel.id, msg.id)
+                await self.database.create_updated_message(msg.guild.id, "gtanw", msg.channel.id, msg.id)
                 server.updated_messages["name"]["gtanw"] = nwmessage
                 server.updated_messages["id"][nwmessage.id] = nwmessage
             else:

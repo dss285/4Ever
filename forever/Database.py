@@ -3,20 +3,13 @@ import psycopg2.extras
 import discord
 from models.BotMention import BotMention
 from models.UpdatedMessage import UpdatedMessage
-from warframe.CetusMessage import CetusMessage
-from warframe.FissureMessage import FissureMessage
-from warframe.SortieMessage import SortieMessage
-from warframe.NightwaveMessage import NightwaveMessage
-from warframe.InvasionMessage import InvasionMessage
+from forever.Steam import Steam_API, Dota_Match, Dota_Match_Player
+from forever.Utilities import run_in_executor, log
+from forever.Warframe import CetusMessage, FissureMessage, SortieMessage, NightwaveMessage, InvasionMessage, SolSystem
 from forever.NewswireMessage import NewswireMessage
 
-from warframe.SolSystem import SolNode, SolPlanet
 from forever.Server import Server
-from gfl.Doll import Doll
-def run_in_executor(function):
-    def __decorator(self, *args, **kwargs):
-        return self.client.loop.run_in_executor(function(*args, **kwargs))
-    return __decorator
+from forever.GFL import Doll, Fairy
 class Database:
     def __init__(self, host, user, password, database, client):
         self.host = host
@@ -36,6 +29,9 @@ class Database:
                 'discord_updated_messages',
             },
             "shared" : {
+                "dota_heroes",
+                "dota_matches",
+                "dota_matches_players",
                 'gfl_dolls',
                 'gfl_equipment',
                 'wf_builds',
@@ -64,10 +60,13 @@ class Database:
         with self.connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
             cursor.execute(sql)
         self.connection.commit()
+    @run_in_executor
     def get_data(self,):
         results = {}
         for i, j in self.tables.items():
+            log([i, j])
             for x in j:
+                log(x)
                 results[x] = self.get_table_rows('\"{}\".{}'.format(i, x))
         return results
     def get_table_rows(self, tabletype):
@@ -100,6 +99,7 @@ class Database_Manager(Database):
         self.runtime["gfl"] = {}
         self.runtime["gfl"]["dolls"] = []
         self.runtime["gfl"]["equipment"] = []
+        self.runtime["dota"] = {}
         self.runtime["servers"] = {}
     async def get_server(self, server_id, data, client):
         log_id = next((i["logchannel_id"] for i in data["discord_servers"] if i["server_id"] == server_id), None)
@@ -116,8 +116,8 @@ class Database_Manager(Database):
                 try:
                     message = await channel.fetch_message(x["message_id"])
                 except discord.NotFound:
-                    self.delete_role_message(x["message_id"])
-                    self.delete_updated_message(x["message_id"])
+                    await self.delete_role_message(x["message_id"])
+                    await self.delete_updated_message(x["message_id"])
                     continue
                 if message:
                     role_messages[message.id] = {
@@ -131,7 +131,7 @@ class Database_Manager(Database):
                 if role:
                     joinable_roles.add(role)
                 else:
-                    self.delete_joinable_role(x["role_id"])
+                    await self.delete_joinable_role(x["role_id"])
         for x in data["discord_notifications"]:
             if x["server_id"] == server_id:
                 role = discord_server.get_role(x["role_id"])
@@ -139,7 +139,7 @@ class Database_Manager(Database):
                     bot_mention = BotMention(x["notification_name"], role)
                     notifications.append(bot_mention)
                 else:
-                    self.delete_notification(x["notification_name"], x["server_id"])
+                    await self.delete_notification(x["notification_name"], x["server_id"])
         for x in data["discord_updated_messages"]:
             if x["server_id"] == server_id:
                 channel = client.get_channel(x["channel_id"])
@@ -148,8 +148,8 @@ class Database_Manager(Database):
                     try:
                         message = await channel.fetch_message(x["message_id"])
                     except discord.NotFound:
-                        self.delete_role_message(x["message_id"])
-                        self.delete_updated_message(x["message_id"])
+                        await self.delete_role_message(x["message_id"])
+                        await self.delete_updated_message(x["message_id"])
                         message = None
                     if message:
                         message_type = x["message_type"]
@@ -200,13 +200,59 @@ class Database_Manager(Database):
         for item in data["wf_items"]:
             self.runtime["warframe"]["translate"]["items"][item["code_name"]]       = item["name"]
         for item in data["wf_solsystem_planets"]:
-            self.runtime["warframe"]["translate"]["solsystem"]["planets"].append(SolPlanet(item["planet_id"], item["name"]))
+            self.runtime["warframe"]["translate"]["solsystem"]["planets"].append(SolSystem.SolPlanet(item["planet_id"], item["name"]))
         for item in data["wf_solsystem_nodes"]:
-            self.runtime["warframe"]["translate"]["solsystem"]["nodes"].append(SolNode(item["node_id"], item["name"],
+            self.runtime["warframe"]["translate"]["solsystem"]["nodes"].append(SolSystem.SolNode(item["node_id"], item["name"],
             next(planet for planet in self.runtime["warframe"]["translate"]["solsystem"]["planets"] if planet.id == item["planet_id"])))
+    def dota_matches(self, data):
+        match_players = {}
+        for i in data["dota_matches_players"]:
+            if i["match_id"] not in match_players:
+                match_players[i["match_id"]] = {"players" : {"dire" : {}, "radiant" : {}}, "radiant_team_ids" : set(), "dire_team_ids" : set()}
+            player_slot = i["player_slot"]
+            if i["team"] == "dire":
+                player_slot -= 128
+                match_players[i["match_id"]]["dire_team_ids"].add(i["id"])
+            elif i["team"] == "radiant":
+                match_players[i["match_id"]]["radiant_team_ids"].add(i["id"])
+            match_players[i["match_id"]]["players"][i["team"]][player_slot] = Dota_Match_Player(
+                        i["id"],
+                        i["player_slot"],
+                        i["hero_id"],
+                        i["kills"],
+                        i["deaths"],
+                        i["assists"],
+                        i["last_hits"],
+                        i["denies"],
+                        i["gpm"],
+                        i["xpm"],
+                        i["level"],
+                        i["hero_dmg"],
+                        i["building_dmg"],
+                        i["healing"],
+                        i["networth"]
+                    )
+
+        for i in data["dota_matches"]:
+            dire_team_ids = match_players[i["id"]]["dire_team_ids"]
+            radiant_team_ids = match_players[i["id"]]["radiant_team_ids"]
+            players = match_players[i["id"]]["players"]
+            dota_match = Dota_Match(
+                i["id"],
+                players,
+                i["game_mode"],
+                i["duration"],
+                i["start_time"],
+                i["radiant_win"],
+                i["radiant_kills"],
+                i["dire_kills"],
+                radiant_team_ids,
+                dire_team_ids
+            )
+            Steam_API.cache.add("match_details_{}".format(dota_match.id), dota_match)
     async def init_runtime(self, client):
         self.structure()
-        data = self.get_data()
+        data = await self.get_data()
         #Server Translation
         for i in data["discord_servers"]:
             await self.get_server(i["server_id"], data, client)
@@ -214,6 +260,9 @@ class Database_Manager(Database):
         self.gfl(data)
         #WF Translation
         self.warframe(data)
+        #dota matches
+        self.dota_matches(data)
+
         self.init_done = True
     def delete_joinable_role(self, role_id):
         self.query(self.query_formats["delete_where"].format(
@@ -222,14 +271,14 @@ class Database_Manager(Database):
             column="role_id",
             value=role_id
         ))
-    def delete_updated_message(self, message_id):
-        self.query(self.query_formats["delete_where"].format(
+    async def delete_updated_message(self, message_id):
+        await self.query(self.query_formats["delete_where"].format(
             schema=self.forever,
             table="discord_updated_messages",
             column="message_id",
             value=message_id
         ))
-    def delete_role_message(self, message_id=None, role_id=None):
+    async def delete_role_message(self, message_id=None, role_id=None):
         query = None
         if message_id and role_id:
             query = self.query_formats["delete_where_and"].format(
@@ -255,9 +304,9 @@ class Database_Manager(Database):
                 value=role_id
             )
         if query:
-            self.query(query)
-    def delete_notification(self, notification_name, server_id):
-        self.query(self.query_formats["delete_where_and"].format(
+            await self.query(query)
+    async def delete_notification(self, notification_name, server_id):
+        await self.query(self.query_formats["delete_where_and"].format(
             schema=self.forever,
             table="discord_notifications",
             column_1="name",
@@ -265,45 +314,91 @@ class Database_Manager(Database):
             column_2="server_id",
             value_2=server_id
         ))
-    def delete_server(self, server_id):
-        self.query(self.query_formats["delete_where"].format(
+    async def delete_server(self, server_id):
+        await self.query(self.query_formats["delete_where"].format(
             schema=self.forever,
             table="discord_servers",
             column="server_id",
             value=server_id
         ))
-    def create_joinable_role(self, role_id, server_id):
-        self.query(self.query_formats["insert_into"].format(
+    async def create_joinable_role(self, role_id, server_id):
+        await self.query(self.query_formats["insert_into"].format(
             schema=self.forever,
             table="discord_joinable_roles",
             columns="role_id, server_id",
             values="{}, {}".format(role_id, server_id)
         ))
-    def create_updated_message(self, server_id, message_type, channel_id, message_id):
-        self.query(self.query_formats["insert_into"].format(
+    async def create_updated_message(self, server_id, message_type, channel_id, message_id):
+        await self.query(self.query_formats["insert_into"].format(
             schema=self.forever,
             table="discord_updated_messages",
             columns="server_id, message_type, channel_id, message_id",
             values="{}, \"{}\", {}, {}".format(server_id, message_type, channel_id, message_id)
         ))
-    def create_role_message(self, role_id, message_id, channel_id, emoji, server_id):
-        self.query(self.query_formats["insert_into"].format(
+    async def create_role_message(self, role_id, message_id, channel_id, emoji, server_id):
+        await self.query(self.query_formats["insert_into"].format(
             schema=self.forever,
             table="discord_role_messages",
             columns="role_id, message_id, channel_id, emoji, server_id",
             values="{}, {}, {}, \"{}\", {}".format(role_id, message_id, channel_id, emoji, server_id)
         ))
-    def create_notification(self, notification_name, role_id, server_id):
-        self.query(self.query_formats["insert_into"].format(
+    async def create_notification(self, notification_name, role_id, server_id):
+        await self.query(self.query_formats["insert_into"].format(
             schema=self.forever,
             table="discord_notifications",
             columns="notification_name, role_id, server_id",
             values="\"{}\", {}, {}".format(notification_name, role_id, server_id)
         ))
-    def create_server(self, server_id):
-        self.query(self.query_formats["insert_into"].format(
+    async def create_server(self, server_id):
+        await self.query(self.query_formats["insert_into"].format(
             schema=self.forever,
             table="discord_servers",
             columns="server_id",
             values="{}".format(server_id)
         ))
+    async def create_dota_match(self, dota_match):
+        query_match = self.query_formats["insert_into"]
+        query_player = self.query_formats["insert_into"]
+        query_match = query_match.format(
+            schema=self.shared,
+            table="dota_matches",
+            columns="id, game_mode, start_time, radiant_win, radiant_kills, dire_kills,  duration",
+            values="{}, {}, {}, {}, {}, {}, {}".format(
+                dota_match.id,
+                dota_match.game_mode,
+                dota_match.start_time,
+                dota_match.radiant_win,
+                dota_match.radiant_kills,
+                dota_match.dire_kills,
+                dota_match.duration
+            )
+        )
+        await self.query(query_match)
+        for team, players in dota_match.players.items():
+            for player_slot, player in players.items():
+                await self.query(
+                    query_player.format(
+                        schema=self.shared,
+                        table="dota_matches_players",
+                        columns="id, match_id, player_slot, hero_id, kills, deaths, assists, last_hits, denies, gpm, xpm, level, hero_dmg, building_dmg, healing, networth, team",
+                        values="{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, '{}'".format(
+                            player.id or "null",
+                            dota_match.id,
+                            player.player_slot,
+                            player.hero_id,
+                            player.kills,
+                            player.deaths,
+                            player.assists,
+                            player.last_hits,
+                            player.denies,
+                            player.gpm,
+                            player.xpm,
+                            player.level,
+                            player.hero_dmg or "null",
+                            player.building_dmg or "null",
+                            player.healing or "null",
+                            player.networth or "null",
+                            team
+                        )
+                    )
+                )
