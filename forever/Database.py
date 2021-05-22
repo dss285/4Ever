@@ -64,9 +64,7 @@ class Database:
     def get_data(self,):
         results = {}
         for i, j in self.tables.items():
-            log([i, j])
             for x in j:
-                log(x)
                 results[x] = self.get_table_rows('\"{}\".{}'.format(i, x))
         return results
     def get_table_rows(self, tabletype):
@@ -204,8 +202,11 @@ class Database_Manager(Database):
         for item in data["wf_solsystem_nodes"]:
             self.runtime["warframe"]["translate"]["solsystem"]["nodes"].append(SolSystem.SolNode(item["node_id"], item["name"],
             next(planet for planet in self.runtime["warframe"]["translate"]["solsystem"]["planets"] if planet.id == item["planet_id"])))
-    def dota_matches(self, data):
+    def dota(self, data):
         match_players = {}
+        dota_heroes = {}
+        for i in data["dota_heroes"]:
+            dota_heroes[i["id"]] = i["name"]
         for i in data["dota_matches_players"]:
             if i["match_id"] not in match_players:
                 match_players[i["match_id"]] = {"players" : {"dire" : {}, "radiant" : {}}, "radiant_team_ids" : set(), "dire_team_ids" : set()}
@@ -232,7 +233,6 @@ class Database_Manager(Database):
                         i["healing"],
                         i["networth"]
                     )
-
         for i in data["dota_matches"]:
             dire_team_ids = match_players[i["id"]]["dire_team_ids"]
             radiant_team_ids = match_players[i["id"]]["radiant_team_ids"]
@@ -250,6 +250,7 @@ class Database_Manager(Database):
                 dire_team_ids
             )
             Steam_API.cache.add("match_details_{}".format(dota_match.id), dota_match)
+        self.runtime["dota"]["heroes"] = dota_heroes
     async def init_runtime(self, client):
         self.structure()
         data = await self.get_data()
@@ -261,7 +262,7 @@ class Database_Manager(Database):
         #WF Translation
         self.warframe(data)
         #dota matches
-        self.dota_matches(data)
+        self.dota(data)
 
         self.init_done = True
     def delete_joinable_role(self, role_id):

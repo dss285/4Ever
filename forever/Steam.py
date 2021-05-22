@@ -116,7 +116,7 @@ class Steam_API():
     async def resolve_vanity_url(self, vanity_url):
         data = await self.request("ISteamUser/ResolveVanityURL/v0001/", {"vanityurl":vanity_url})
         if data and "response" in data and "steamid" in data["response"]:
-            return data["response"]["steamid"]
+            return int(data["response"]["steamid"])
         return None
     @cache.async_cached(3600)
     async def get_steam_profile(self, steam_64id):
@@ -233,7 +233,6 @@ class Steam_API():
             )
             return match
         return None
-    @cache.async_cached(600)
     async def get_complete_account(self, steam_64id, turbo_only=True):
         steam_32id = self.steam_64bit_id_to_32bit(steam_64id)
         match_history, new_matches = await self.get_dota_player_match_history(steam_32id, None, 23 if turbo_only else None)
