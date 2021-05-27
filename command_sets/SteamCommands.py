@@ -96,10 +96,9 @@ class DotaHeroProfile(Command):
                     steam_32id = int(steam_id) if steam_id < 76561197960265728 else self.steam_api.steam_32bit_id_to_64bit(steam_id)
                     steam_64id = int(steam_id) if steam_id > 76561197960265728 else self.steam_api.steam_64bit_id_to_32bit(steam_id)
                 await message.reply("> Might take a while, sit tight")
-                account, new_matches = await self.steam_api.get_complete_account(steam_64id, hero_id)
+                account, new_matches = await self.steam_api.get_complete_account(steam_64id, hero_id, True)
                 for i in new_matches:
                     await self.database.create_dota_match(i)
-
                 em = EmbedTemplate(title=account.steam_profile.name,
                 description="Win rate: {}%\nWins: {}\nLosses: {}\nTotal matches:{}".format(
                     account.win_rate()*100,
