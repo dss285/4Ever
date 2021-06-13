@@ -45,17 +45,19 @@ class DotaProfile(Command):
                 if vanity_url[len(vanity_url)-1] == '/':
                     vanity_url = vanity_url[:len(vanity_url)-1]
                 steam_64id = await self.steam_api.resolve_vanity_url(vanity_url)
-                steam_32id = self.steam_api.steam_64bit_id_to_32bit(steam_64id)
+                if steam_64id:
+                    steam_32id = self.steam_api.steam_64bit_id_to_32bit(steam_64id)
             elif steam_profile_id is not None:
                 steam_32id = self.steam_api.steam_64bit_id_to_32bit(steam_profile_id)
                 steam_64id = int(steam_profile_id)
             elif steam_id is not None:
                 steam_32id = int(steam_id) if steam_id < 76561197960265728 else self.steam_api.steam_32bit_id_to_64bit(steam_id)
                 steam_64id = int(steam_id) if steam_id > 76561197960265728 else self.steam_api.steam_64bit_id_to_32bit(steam_id)
-            await message.reply("> Might take a while, sit tight")
-            account, new_matches = await self.steam_api.get_complete_account(steam_64id)
-            for i in new_matches:
-                await self.database.create_dota_match(i)
+            if steam_64id:
+                await message.reply("> Might take a while, sit tight")
+                account, new_matches = await self.steam_api.get_complete_account(steam_64id)
+                for i in new_matches:
+                    await self.database.create_dota_match(i)
 
             em = EmbedTemplate(title=account.steam_profile.name,
             description="Win rate: {}%\nWins: {}\nLosses: {}\nTotal matches:{}".format(

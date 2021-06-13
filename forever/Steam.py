@@ -101,7 +101,7 @@ class Steam_API():
     async def request(self, endpoint, params):
         async with self.lock:
             tmp = time.time() - self.last_request_timestamp
-            if tmp < 1.1:
+            if tmp < 1.2:
                 await asyncio.sleep(1.1-tmp)
             params["key"] = self.api_key
             self.last_request_timestamp = time.time()
