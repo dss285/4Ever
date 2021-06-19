@@ -8,7 +8,7 @@ from forever.Utilities import run_in_executor, log
 from forever.Warframe import CetusMessage, FissureMessage, SortieMessage, NightwaveMessage, InvasionMessage, SolSystem
 from forever.NewswireMessage import NewswireMessage
 
-from forever.Server import Server
+from models.Server import Server
 from forever.GFL import Doll, Fairy
 class Database:
     def __init__(self, host, user, password, database, client):

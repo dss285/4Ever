@@ -1,19 +1,17 @@
-from re import M
 import discord
 import asyncio
 from datetime import datetime
 import time
 import traceback
-
 import config
 
 from models.EmbedTemplate import EmbedTemplate
 
 from forever.Utilities import log
 from forever.Database import Database_Manager
-from forever.Server import Server
+from models.Server import Server
 from forever.NewswireMessage import Newswire
-from forever.Warframe import Worldstate, DropTables
+from forever.Warframe import Worldstate
 from forever.Steam import Steam_API
 
 from command_sets.VoiceCommands import VoiceCommands

@@ -3,7 +3,7 @@ import discord
 from models.Commands import Commands
 from models.Command import Command
 from models.EmbedTemplate import EmbedTemplate
-from voice.VoicePlayer import VoicePlayer
+from forever.Voice import VoicePlayer
 import re
 class VoiceCommands(Commands):
     def __init__(self, module_name, description, command_key, client):

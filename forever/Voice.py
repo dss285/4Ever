@@ -16,7 +16,6 @@ class Song:
 		self.views = views
 		self.url = url
 class VoicePlayer:
-
 	def __init__(self, vc, channel, client):
 		self.sounds = {}
 		self.update_sounds()
