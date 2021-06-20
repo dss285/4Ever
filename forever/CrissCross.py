@@ -1,6 +1,7 @@
 import discord
 import re
 import asyncio
+from models.EmbedTemplate import EmbedTemplate
 class CrissCross:
 # x x x
 # x x x
@@ -62,7 +63,7 @@ class CrissCross:
         elif self.turn==1:
             await channel.send("> {} won".format(self.player2[0].mention))
     def getEmbed(self,):
-        em = discord.Embed(title="Crisscross", description="{} :x: vs {} :o:".format(self.player1[0].mention, self.player2[0].mention))
+        em = EmbedTemplate(title="Crisscross", description="{} :x: vs {} :o:".format(self.player1[0].mention, self.player2[0].mention))
         em.add_field(name="Game", value=str(self.map).replace("x", ":x:").replace("0", ":o:").replace("-", ":large_blue_diamond:"))
         return em
     class Map:

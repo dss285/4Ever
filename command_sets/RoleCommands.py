@@ -2,9 +2,8 @@ import asyncio
 import discord
 
 from forever import Utilities
-from models.Commands import Commands
-from models.Command import Command
 from models.EmbedTemplate import EmbedTemplate
+from models.Commands import Commands, Command
 
 import re
 

@@ -4,8 +4,7 @@ import re
 import datetime
 
 from models.EmbedTemplate import EmbedTemplate
-from models.Commands import Commands
-from models.Command import Command
+from models.Commands import Commands, Command
 
 
 class GFLCommands(Commands):

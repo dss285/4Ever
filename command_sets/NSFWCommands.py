@@ -1,11 +1,11 @@
 import asyncio
 import discord
 import time
-from forever import NSFW
-from models.Commands import Commands
-from models.Command import Command
-from models.EmbedTemplate import EmbedTemplate
 import re
+
+from forever import NSFW
+from models.EmbedTemplate import EmbedTemplate
+from models.Commands import Commands, Command
 
 class NSFWCommands(Commands):
     def __init__(self, module_name, description, command_key):

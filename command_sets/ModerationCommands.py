@@ -2,8 +2,7 @@ import asyncio
 import discord
 
 from models.EmbedTemplate import EmbedTemplate
-from models.Commands import Commands
-from models.Command import Command
+from models.Commands import Commands, Command
 
 import re
 class ModerationCommands(Commands):

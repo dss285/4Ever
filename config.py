@@ -7,4 +7,4 @@ password = os.getenv('DATABASE_PASSWORD')
 database = os.getenv('DATABASE_NAME')
 steam_api_key = os.getenv('STEAM_API_KEY')
 
-asset_path = '/assets'
+asset_path = '../assets'

@@ -1,4 +1,3 @@
-from models.Command import Command
 from models.EmbedTemplate import EmbedTemplate
 class Commands:
     def __init__(self, module_name, command_list, description, command_key):
@@ -37,3 +36,12 @@ class Commands:
                 if tobreak:
                     break
 
+class Command:
+    def __init__(self, command_key, name, description, usage, aliases):
+        self.aliases = aliases
+        self.command_key = command_key
+        self.name = name
+        self.description = description
+        self.usage = usage
+
+        self.aliases.append(self.name)

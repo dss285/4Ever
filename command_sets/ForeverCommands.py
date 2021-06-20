@@ -2,8 +2,7 @@ import asyncio
 import discord
 from forever.CrissCross import CrissCross as CC
 from forever.NewswireMessage import NewswireMessage, Newswire
-from models.Commands import Commands
-from models.Command import Command
+from models.Commands import Commands, Command
 from models.EmbedTemplate import EmbedTemplate
 import re
 

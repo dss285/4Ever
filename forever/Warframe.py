@@ -148,12 +148,12 @@ class DropTables:
 	def relicSearch(self, searched_value):
 		vals = self.searchKey("relicRewards", searched_value)
 		if len(vals) == 1:
-			em = discord.Embed(title=self.data["relicRewards"]["title"], description=vals[0])
+			em = EmbedTemplate(title=self.data["relicRewards"]["title"], description=vals[0])
 			for i, j in self.data["relicRewards"]["data"][vals[0]].items():
 				em.add_field(name=i, value="\n".join(j))
 			return em
 		else:
-			return discord.Embed(title=self.data["relicRewards"]["title"], description="\n".join(vals))
+			return EmbedTemplate(title=self.data["relicRewards"]["title"], description="\n".join(vals))
 class CetusStatus:
     def __init__(self, expiry):
         self.expiry = expiry

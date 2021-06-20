@@ -1,9 +1,8 @@
 import asyncio
 import discord
 import time
-from models.Commands import Commands
-from models.Command import Command
 from models.EmbedTemplate import EmbedTemplate
+from models.Commands import Commands, Command
 
 from forever.Warframe import DropTables, CetusMessage, SortieMessage, FissureMessage, InvasionMessage, NightwaveMessage
 import re
