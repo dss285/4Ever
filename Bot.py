@@ -10,7 +10,7 @@ from models.EmbedTemplate import EmbedTemplate
 from forever.Utilities import log
 from forever.Database import Database_Manager
 from models.Server import Server
-from forever.NewswireMessage import Newswire
+from forever.Newswire import Newswire
 from forever.Warframe import Worldstate
 from forever.Steam import Steam_API
 
