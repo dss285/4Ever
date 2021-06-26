@@ -12,10 +12,10 @@ class WarframeCommands(Commands):
         self.database = database
         self.client = client
         self.droptables = DropTables()
-        command_list = self.fetchCommands(command_key)
+        command_list = self.fetch_commands(command_key)
         super().__init__(module_name, command_list, description, command_key)
 
-    def fetchCommands(self, command_key):
+    def fetch_commands(self, command_key):
         command_list = {}
         command_list["worldstate"] = WorldState(command_key, self.database)
         command_list["relics"] = RelicSearch(command_key, self.droptables, self.client)

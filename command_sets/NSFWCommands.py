@@ -9,12 +9,12 @@ from models.Commands import Commands, Command
 
 class NSFWCommands(Commands):
     def __init__(self, module_name, description, command_key):
-        command_list = self.fetchCommands(command_key)
+        command_list = self.fetch_commands(command_key)
         self.rate_limit = 5
         self.count = 0
         self.timer = {"start": time.time(), "end": time.time()+5}
         super().__init__(module_name, command_list, description, command_key)
-    def fetchCommands(self, command_key):
+    def fetch_commands(self, command_key):
         command_list = {}
         command_list["rule34"] = Rule34(command_key)
         command_list["realbooru"] = Realbooru(command_key)

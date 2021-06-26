@@ -11,10 +11,10 @@ class RoleCommands(Commands):
     def __init__(self, module_name, description, command_key, client, database):
         self.client = client
         self.database = database
-        command_list = self.fetchCommands(command_key)
+        command_list = self.fetch_commands(command_key)
         super().__init__(module_name, command_list, description, command_key)
 
-    def fetchCommands(self, command_key):
+    def fetch_commands(self, command_key):
         command_list = {}
         command_list["list"] = ListRoles(command_key)
         command_list["join"] = Join(command_key)

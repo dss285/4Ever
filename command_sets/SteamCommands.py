@@ -11,9 +11,9 @@ class SteamCommands(Commands):
         self.database = database
         self.steam_api = steam_api
 
-        command_list = self.fetchCommands(command_key)
+        command_list = self.fetch_commands(command_key)
         super().__init__(module_name, command_list, description, command_key)
-    def fetchCommands(self, command_key):
+    def fetch_commands(self, command_key):
         command_list = {}
         #command_list["test"] = Test(command_key, self.database, self.steam_api)
         command_list["dotaprofile"] = DotaProfile(command_key, self.database, self.steam_api)

@@ -11,10 +11,10 @@ class ForeverCommands(Commands):
         self.client = client
         self.database = database
         self.newswire = newswire
-        command_list = self.fetchCommands(command_key)
+        command_list = self.fetch_commands(command_key)
         super().__init__(module_name, command_list, description, command_key)
 
-    def fetchCommands(self, command_key):
+    def fetch_commands(self, command_key):
         command_list = {}
         command_list["crisscross"] = CrissCross(command_key, self.client)
         command_list["gtanw"] = GTANewswire(command_key, self.database, self.newswire)

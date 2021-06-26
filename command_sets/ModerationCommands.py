@@ -7,9 +7,9 @@ from models.Commands import Commands, Command
 import re
 class ModerationCommands(Commands):
     def __init__(self, module_name, description, command_key):
-        command_list = self.fetchCommands(command_key)
+        command_list = self.fetch_commands(command_key)
         super().__init__(module_name, command_list, description, command_key)
-    def fetchCommands(self, command_key):
+    def fetch_commands(self, command_key):
         command_list = {}
         command_list["purge"] = Purge(command_key)
         return command_list

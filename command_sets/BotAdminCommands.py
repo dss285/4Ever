@@ -10,10 +10,10 @@ class BotAdminCommands(Commands):
 
         self.client = client
         self.database = database
-        command_list = self.fetchCommands(command_key)
+        command_list = self.fetch_commands(command_key)
         super().__init__(module_name, command_list, description, command_key)
 
-    def fetchCommands(self, command_key):
+    def fetch_commands(self, command_key):
         command_list = {}
         command_list["eval"] = EvalCommand(command_key, self.client)
         command_list["shell"] = ShellCommand(command_key, self.client)
