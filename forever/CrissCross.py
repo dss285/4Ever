@@ -35,7 +35,7 @@ class CrissCross:
             await channel.send(embed=self.getEmbed())
             if self.turn == 1:
                 try:
-                    await channel.send("> {}, your turn".format(self.player1[0].mention))
+                    await channel.send(f"> {self.player1[0].mention}, your turn")
                     response = await getResponse(self.player1, 2)
                     if not runResponse(self.player1, response):
                         self.turn = 1
@@ -46,7 +46,7 @@ class CrissCross:
                     breakloop = True
             else:
                 try:
-                    await channel.send("{}, your turn".format(self.player2[0].mention))
+                    await channel.send(f"{self.player2[0].mention}, your turn")
                     response = await getResponse(self.player2, 1)
                     if not runResponse(self.player2, response):
                         self.turn = 2
@@ -59,11 +59,11 @@ class CrissCross:
             if breakloop:
                 break
         if self.turn == 2: #player1 won
-            await channel.send("> {} won".format(self.player1[0].mention))
+            await channel.send(f"> {self.player1[0].mention} won")
         elif self.turn==1:
-            await channel.send("> {} won".format(self.player2[0].mention))
+            await channel.send(f"> {self.player2[0].mention} won")
     def getEmbed(self,):
-        em = EmbedTemplate(title="Crisscross", description="{} :x: vs {} :o:".format(self.player1[0].mention, self.player2[0].mention))
+        em = EmbedTemplate(title="Crisscross", description=f"{self.player1[0].mention} :x: vs {self.player2[0].mention} :o:")
         em.add_field(name="Game", value=str(self.map).replace("x", ":x:").replace("0", ":o:").replace("-", ":large_blue_diamond:"))
         return em
     class Map:

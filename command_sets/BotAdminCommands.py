@@ -24,9 +24,9 @@ class BotAdminCommands(Commands):
 class ShellCommand(Command):
     def __init__(self, command_key, client):
         self.client = client
-        super().__init__(command_key, "shell", """Shell""", "{} {} {}".format(command_key, "shell", "*shell command"), ['bash', 'sh'])
+        super().__init__(command_key, "shell", """Shell""", f"{command_key} shell *shell command*", ['bash', 'sh'])
     async def run(self, message, server):
-        pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s(.+)"
+        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(.+)"
         reg = re.match(pattern, message.content)
         if reg:
             if reg.group(2):
@@ -34,26 +34,26 @@ class ShellCommand(Command):
                 output = subprocess.run(splitted, stdout=subprocess.PIPE, text=True, universal_newlines=True)
                 if output.returncode == 0:
                     if len(output.stdout) < 1975:
-                        await message.reply("""```{}```""".format(output.stdout))
+                        await message.reply(f"""```{output.stdout}```""")
                     else:
                         fo = open("tmp.txt", "w+")
                         fo.write(output.stdout)
                         fo.close()
                         await message.reply(file=discord.File("tmp.txt"))
                 else:
-                    await message.reply("Error from shell command: {}".format(output.stderr))
+                    await message.reply(f"Error from shell command: {output.stderr}")
 class EvalCommand(Command):
     def __init__(self, command_key, client):
         self.client = client
-        super().__init__(command_key, "eval", """Eval""", "{} {} {}".format(command_key, "eval", "*evaled statement*"), ['ev'])
+        super().__init__(command_key, "eval", """Eval""", f"{command_key} eval *evaled statement*", ['ev'])
     async def run(self, message, server):
-        pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s(.+)"
+        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(.+)"
         reg = re.match(pattern, message.content)
         if reg:
             if reg.group(2):
                 output = str(eval(reg.group(2)))
                 if len(output) < 1975:
-                    await message.reply("""```{}```""".format(output))
+                    await message.reply(f"""```{output}```""")
                 else:
                     fo = open("tmp.txt", "w+")
                     fo.write(output)

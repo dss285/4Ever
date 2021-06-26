@@ -31,4 +31,4 @@ class Server:
             except discord.NotFound:
                 pass
     def __repr__(self):
-        return "<Forever.Server discord_server={}>".format(self.discord_server.__repr__())
+        return f"<Forever.Server discord_server={self.discord_server.__repr__()}>"

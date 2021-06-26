@@ -37,9 +37,9 @@ class NSFWCommands(Commands):
             await message.channel.send(embed=em)
 class Rule34(Command):
     def __init__(self, command_key):
-        super().__init__(command_key, "rule34", """Rule34 Search""", "{} {} {}".format(command_key, "rule34", "*<tags>*"), ["r34"])
+        super().__init__(command_key, "rule34", """Rule34 Search""", f"{command_key} rule34 *<tags>*", ["r34"])
     async def run(self, message, server):
-        pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s(.+)"
+        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(.+)"
         reg = re.match(pattern, message.content)
         if reg:
             if reg.group(2):
@@ -47,9 +47,9 @@ class Rule34(Command):
                 await message.channel.send(embed=em)    
 class Realbooru(Command):
     def __init__(self, command_key):
-        super().__init__(command_key, "realbooru", """Realbooru Search""", "{} {} {}".format(command_key, "realbooru", "*<tags>*"), ["real"])
+        super().__init__(command_key, "realbooru", """Realbooru Search""", f"{command_key} realbooru *<tags>*", ["real"])
     async def run(self, message, server):
-        pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s(.+)"
+        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(.+)"
         reg = re.match(pattern, message.content)
         if reg:
             if reg.group(2):
@@ -57,9 +57,9 @@ class Realbooru(Command):
                 await message.reply(embed=em)
 class Safebooru(Command):
     def __init__(self, command_key):
-        super().__init__(command_key, "safebooru", """Safebooru Search""", "{} {} {}".format(command_key, "safebooru", "*<tags>*"), ["safe"])
+        super().__init__(command_key, "safebooru", """Safebooru Search""", f"{command_key} safebooru *<tags>*", ["safe"])
     async def run(self, message, server):
-        pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s(.+)"
+        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(.+)"
         reg = re.match(pattern, message.content)
         if reg:
             if reg.group(2):
@@ -67,9 +67,9 @@ class Safebooru(Command):
                 await message.reply(embed=em)
 class Gelbooru(Command):
     def __init__(self, command_key):
-        super().__init__(command_key, "gelbooru", """Gelbooru Search""", "{} {} {}".format(command_key, "gelbooru", "*<tags>*"), ["gel"])
+        super().__init__(command_key, "gelbooru", """Gelbooru Search""", f"{command_key} gelbooru *<tags>*", ["gel"])
     async def run(self, message, server):
-        pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s(.+)"
+        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(.+)"
         reg = re.match(pattern, message.content)
         if reg:
             if reg.group(2):
@@ -77,9 +77,9 @@ class Gelbooru(Command):
                 await message.reply(embed=em)
 class Danbooru(Command):
     def __init__(self, command_key):
-        super().__init__(command_key, "danbooru", """Danbooru Search""", "{} {} {}".format(command_key, "danbooru", "*<tags>*"), ["dan"])
+        super().__init__(command_key, "danbooru", """Danbooru Search""", f"{command_key} danbooru *<tags>*", ["dan"])
     async def run(self, message, server):
-        pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s(.+)"
+        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(.+)"
         reg = re.match(pattern, message.content)
         if reg:
             if reg.group(2):

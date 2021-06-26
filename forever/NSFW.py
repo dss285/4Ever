@@ -7,7 +7,7 @@ from models.EmbedTemplate import EmbedTemplate
 from forever.Utilities import fetchURL, Cache
 cache = Cache()
 async def booruAPI(keywords, url, api):
-    key = "{}_{}".format(api, keywords)
+    key = f"{api}_{keywords}"
     if key not in cache:
         params = add_params(keywords, False)
         response = await fetchURL(url, params)
@@ -30,7 +30,7 @@ async def safebooru(keywords):
 async def gelbooru(keywords):
     return await booruAPI(keywords, 'https://gelbooru.com/index.php', 'gelbooru')
 async def danbooru(keywords):
-    key = "{}_{}".format("danbooru", keywords)
+    key = f"danbooru_{keywords}"
     if key not in cache:
         params = add_params(keywords, True)
         response = await fetchURL('https://danbooru.donmai.us/posts.json', params)

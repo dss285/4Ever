@@ -65,7 +65,7 @@ class Bot(discord.Client):
             except Exception as e:
                 
                 print("Error, logged")
-                log(["[BASE LOOP][{}] {}".format(time.time(), e), traceback.format_exc()+"\r\n"])
+                log([f"[BASE LOOP][{time.time()}] {e}", traceback.format_exc()+"\r\n"])
 
             await asyncio.sleep(120)
     async def server_sync(self,):
@@ -112,11 +112,11 @@ class Bot(discord.Client):
             if message.content.startswith(self.command_key+"help"):
                 em = EmbedTemplate(title="Help", timestamp=datetime.utcnow())
                 for name, commandset in self.commands.items():
-                    em.add_field(name="{}".format(name.title()), value=commandset.command_key+" help")
+                    em.add_field(name=f"{name.title()}", value=commandset.command_key+" help")
                 await message.channel.send(embed=em)
         except Exception as e:
             print("Error, logged")
-            log(["[COMMANDS][{}] {}".format(time.time(), e), traceback.format_exc()+"\r\n"])
+            log([f"[COMMANDS][{time.time()}] {e}", traceback.format_exc()+"\r\n"])
     async def on_voice_state_update(self, member, before, after):
         server = self.database.runtime["servers"].get(member.guild.id)
         if server and server.voice and len(server.voice.vc.channel.members) == 1:

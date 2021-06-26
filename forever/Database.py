@@ -65,12 +65,12 @@ class Database:
         results = {}
         for i, j in self.tables.items():
             for x in j:
-                results[x] = self.get_table_rows('\"{}\".{}'.format(i, x))
+                results[x] = self.get_table_rows(f'\"{i}\".{x}')
         return results
     def get_table_rows(self, tabletype):
         results = None
         with self.connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
-            cursor.execute("SELECT * FROM {}".format(tabletype))
+            cursor.execute(f"SELECT * FROM {tabletype}")
             results = cursor.fetchall()
         self.connection.commit()
         return results
@@ -250,7 +250,7 @@ class Database_Manager(Database):
                 radiant_team_ids,
                 dire_team_ids
             )
-            Steam_API.cache.add("match_details_{}".format(dota_match.id), dota_match)
+            Steam_API.cache.add(f"match_details_{dota_match.id}", dota_match)
         self.runtime["dota"]["heroes"] = dota_heroes
     async def init_runtime(self, client):
         self.structure()
@@ -312,7 +312,7 @@ class Database_Manager(Database):
             schema=self.forever,
             table="discord_notifications",
             column_1="name",
-            value_1="\"{}\"".format(notification_name),
+            value_1=f"\"{notification_name}\"",
             column_2="server_id",
             value_2=server_id
         ))
@@ -328,35 +328,35 @@ class Database_Manager(Database):
             schema=self.forever,
             table="discord_joinable_roles",
             columns="role_id, server_id",
-            values="{}, {}".format(role_id, server_id)
+            values=f"{role_id}, {server_id}"
         ))
     async def create_updated_message(self, server_id, message_type, channel_id, message_id):
         await self.query(self.query_formats["insert_into"].format(
             schema=self.forever,
             table="discord_updated_messages",
             columns="server_id, message_type, channel_id, message_id",
-            values="{}, \"{}\", {}, {}".format(server_id, message_type, channel_id, message_id)
+            values=f"{server_id}, \"{message_type}\", {channel_id}, {message_id}"
         ))
     async def create_role_message(self, role_id, message_id, channel_id, emoji, server_id):
         await self.query(self.query_formats["insert_into"].format(
             schema=self.forever,
             table="discord_role_messages",
             columns="role_id, message_id, channel_id, emoji, server_id",
-            values="{}, {}, {}, \"{}\", {}".format(role_id, message_id, channel_id, emoji, server_id)
+            values=f"{role_id}, {message_id}, {channel_id}, \"{emoji}\", {server_id}"
         ))
     async def create_notification(self, notification_name, role_id, server_id):
         await self.query(self.query_formats["insert_into"].format(
             schema=self.forever,
             table="discord_notifications",
             columns="notification_name, role_id, server_id",
-            values="\"{}\", {}, {}".format(notification_name, role_id, server_id)
+            values=f"\"{notification_name}\", {role_id}, {server_id}"
         ))
     async def create_server(self, server_id):
         await self.query(self.query_formats["insert_into"].format(
             schema=self.forever,
             table="discord_servers",
             columns="server_id",
-            values="{}".format(server_id)
+            values=f"{server_id}"
         ))
     async def create_dota_match(self, dota_match):
         query_match = self.query_formats["insert_into"]
@@ -365,15 +365,7 @@ class Database_Manager(Database):
             schema=self.shared,
             table="dota_matches",
             columns="id, game_mode, start_time, radiant_win, radiant_kills, dire_kills,  duration",
-            values="{}, {}, {}, {}, {}, {}, {}".format(
-                dota_match.id,
-                dota_match.game_mode,
-                dota_match.start_time,
-                dota_match.radiant_win,
-                dota_match.radiant_kills,
-                dota_match.dire_kills,
-                dota_match.duration
-            )
+            values=f"{dota_match.id}, {dota_match.game_mode}, {dota_match.start_time}, {dota_match.radiant_win}, {dota_match.radiant_kills}, {dota_match.dire_kills}, {dota_match.duration}"
         )
         await self.query(query_match)
         for team, players in dota_match.players.items():

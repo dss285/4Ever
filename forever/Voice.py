@@ -101,9 +101,9 @@ class VoicePlayer:
 		new_songs_str = ""
 		for i in new_songs:
 			if len(new_songs_str) < 1000:
-				new_songs_str += "[{}]({}), {} {:,.0f} views\n".format(i.title[:40], i.url, datetime.timedelta(seconds=i.duration), i.views)
+				new_songs_str += f"[{i.title[:40]}]({i.url}), {datetime.timedelta(seconds=i.duration)} {i.views:,.0f} views\n"
 			else:
 				break
 		self.playlist.extend(new_songs)
-		em = EmbedTemplate(title="Added {} to Playlist".format(len(new_songs)),description=new_songs_str)
+		em = EmbedTemplate(title=f"Added {len(new_songs)} to Playlist",description=new_songs_str)
 		await self.channel.send(embed=em)

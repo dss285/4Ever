@@ -25,9 +25,9 @@ class RoleCommands(Commands):
         return command_list
 class Join(Command):
     def __init__(self, command_key):
-        super().__init__(command_key, "join", """Joins X role""", "{} {} {}".format(command_key, "join", "*<role name>*"), [])
+        super().__init__(command_key, "join", """Joins X role""", f"{command_key} join *<role name>*", [])
     async def run(self, message, server):
-        pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s(.+)"
+        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(.+)"
         reg = re.match(pattern, message.content)
         if reg:
             if reg.group(2):
@@ -41,9 +41,9 @@ class Join(Command):
                     await message.author.add_roles(server.joinable_roles["id"][reg.group(2)])
 class Leave(Command):
     def __init__(self, command_key):
-        super().__init__(command_key, "leave", """Leaves X role""", "{} {} {}".format(command_key, "leave", "*<role name>*"), [])
+        super().__init__(command_key, "leave", """Leaves X role""", f"{command_key} leave *<role name>*", [])
     async def run(self, message, server):
-        pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s(.+)"
+        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(.+)"
         reg = re.match(pattern, message.content)
         if reg:
             if reg.group(2):
@@ -58,10 +58,10 @@ class Leave(Command):
 class Add(Command):
     def __init__(self, command_key, database):
         self.database = database
-        super().__init__(command_key, "add", """Adds X role""", "{} {} {}".format(command_key, "add", "*<role mention>*"), [])
+        super().__init__(command_key, "add", """Adds X role""", f"{command_key} add *<role mention>*", [])
     async def run(self, message, server):
         if message.author.guild_permissions.administrator:
-            pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s(.+)"
+            pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(.+)"
             reg = re.match(pattern, message.content)
             if reg:
                 if reg.group(2):
@@ -74,10 +74,10 @@ class Add(Command):
 class Remove(Command):
     def __init__(self, command_key, database):
         self.database = database
-        super().__init__(command_key, "remove", """Removes X role""", "{} {} {}".format(command_key, "remove", "*<role mention>*"), [])
+        super().__init__(command_key, "remove", """Removes X role""", f"{command_key} remove *<role mention>*", [])
     async def run(self, message, server):
         if message.author.guild_permissions.administrator:
-            pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s(.+)"
+            pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(.+)"
             reg = re.match(pattern, message.content)
             if reg:
                 if reg.group(2):
@@ -89,9 +89,9 @@ class Remove(Command):
                             del server.joinable_roles["name"][i.name]
 class ListRoles(Command):
     def __init__(self, command_key):
-        super().__init__(command_key, "list", """Lists roles""", "{} {}".format(command_key, "list"), [])
+        super().__init__(command_key, "list", """Lists roles""", f"{command_key} list", [])
     async def run(self, message, server):
-        pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")"
+        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")"
         reg = re.match(pattern, message.content)
         if reg:
             em = EmbedTemplate(title="Role list", description="\n".join(server.joinable_roles["name"].keys()))
@@ -100,10 +100,10 @@ class CreateRoleMessage(Command):
     def __init__(self, command_key, database, client):
         self.client = client
         self.database = database
-        super().__init__(command_key, "rolemessage", """Assign role reaction to message or send new message to be reacted.""", "{} {} {}".format(command_key, "rolemessage", "*<channel mention or id>*"), [])
+        super().__init__(command_key, "rolemessage", """Assign role reaction to message or send new message to be reacted.""", f"{command_key} rolemessage *<channel mention or id>*", [])
     async def run(self, message, server):
         if message.author.guild_permissions.administrator:
-            pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s(\<?\#?\d+\>?)\s"
+            pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(\<?\#?\d+\>?)\s"
             reg = re.match(pattern, message.content)
             if reg:
                 channel = None

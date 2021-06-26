@@ -8,33 +8,9 @@ def equationGraph(formula, x_range, tick_n):
 	plt.xticks(np.arange(min(x), max(x)+1, tick_n))
 	plt.grid(True)
 	plt.savefig('test.png')
-def base2_to_base10(binary):
-	potency = len(binary)-1
-	total = 0
-	for i in binary:
-		total += (int(i)*2)**potency
-		potency -=1
-	return total
-def base10_to_base2(decimal):
-	potency = math.ceil(math.log(decimal, 2))
-	potency_tmp = potency
-	total = decimal
-	tmp = ""
-	while total != 0:
-		iteration = 2**potency
-		if total-iteration >= 0:
-			tmp += "1"
-			total -= iteration
-		else:
-			tmp += "0"
-		potency -= 1
-	while len(tmp) < potency_tmp+1:
-		tmp += "0"
-	if tmp[0] == "0":
-		tmp = tmp[1:]
-	return tmp
+
 def commonOnotations():
-	x = np.array(range(1, 8))
+	x = np.array(range(1, 12))
 	y = [
 		np.log(x),
 		x,
@@ -44,14 +20,22 @@ def commonOnotations():
 		2**x,
 		
 	]
-	for i in y:
-		print(i)
-		plt.plot(x, i, label='O()')
+	labels = [
+		"LOG N",
+		"N",
+		"N LOG N",
+		"N^2",
+		"N^3",
+		"2^N"
+	]
+	for i, label in zip(y, labels):
+		plt.plot(x, i, label=f"O({label})")
 		
 	plt.xticks(np.arange(min(x), max(x)+1, 10.0))
 	plt.ylabel('Steps')
 	plt.xlabel('Items')
 	plt.grid(True)
+	plt.legend()
 	plt.savefig('onotation.png')
 def probability(trials, drops, chance):
 	coeff = coefficient(int(trials),int(drops))
@@ -79,5 +63,4 @@ def pythagoras(a=None, b=None, c=None):
 		return math.sqrt(math.pow(c,2)-math.pow(b,2))
 	return None
 if __name__ == "__main__":
-	print(base2_to_base10("100000000001"))
-	print(base10_to_base2(2049))
+	print(commonOnotations())

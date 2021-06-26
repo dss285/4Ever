@@ -24,19 +24,13 @@ class SolSystem:
             self.planet = planet
 class DropTables:
 	def __init__(self,):
-		self.path = str(pathlib.Path(__file__).parent.absolute())+"/droptables.json"
 		self.data = {}
-		self.timeupdated = 0
+		self.time_updated = 0
 		self.interval = 86400
-		if os.path.exists(self.path):
-			fo = open(self.path, "r")
-			self.data = json.load(fo)
-			fo.close()
-			self.timeupdated = time.time()
 	async def getData(self,):
 		xx = time.time()
-		if xx - self.timeupdated > self.interval: #12h
-			self.timeupdated = time.time()
+		if xx - self.time_updated > self.interval: #12h
+			self.time_updated = time.time()
 			async with aiohttp.ClientSession() as sess:
 				async with sess.get("https://n8k6e2y6.ssl.hwcdn.net/repos/hnfvc0o3jnfvc873njb03enrf56.html") as r:
 					if r.status==200:
@@ -48,7 +42,7 @@ class DropTables:
 							self.data[i[0]] = {}
 							self.data[i[0]]["title"] = i[1].replace(":", "")
 							self.data[i[0]]["data"] = []
-							test = {}
+							tmp = {}
 							if i[0] == "missionRewards" or i[0] == "keyRewards" or i[0] == "transientRewards":
 								tmp_mission = None
 								tmp_rotation = None
@@ -57,45 +51,45 @@ class DropTables:
 									if x.select('th') and "Rotation" not in text:
 										tmp_mission = text
 										tmp_rotation = None
-										test[tmp_mission] = {}
+										tmp[tmp_mission] = {}
 									elif "Rotation" in text:
 										tmp_rotation = text
-										test[tmp_mission][tmp_rotation] = []
+										tmp[tmp_mission][tmp_rotation] = []
 									else:
 										if tmp_rotation:
-											test[tmp_mission][tmp_rotation].append(text)
-										elif "data" in test[tmp_mission]:
-											test[tmp_mission]["data"].append(text)
+											tmp[tmp_mission][tmp_rotation].append(text)
+										elif "data" in tmp[tmp_mission]:
+											tmp[tmp_mission]["data"].append(text)
 										else:
-											test[tmp_mission]["data"] = []
-											test[tmp_mission]["data"].append(text)
-								self.data[i[0]]["data"] = test
-							if i[0] == "relicRewards":
+											tmp[tmp_mission]["data"] = []
+											tmp[tmp_mission]["data"].append(text)
+								self.data[i[0]]["data"] = tmp
+							elif i[0] == "relicRewards":
 								relicname = None
 								rarity = None
 								for x in table_rows:
 									text = x.get_text()
 									if "Relic" in text:
 										relic_match = re.match("((?:Axi|Neo|Meso|Lith|Requiem)\s\w{0,3}\d{0,2}\s?Relic)\s\((Radiant|Exceptional|Flawless|Intact)\)", text)
-										if relic_match.group(1) in test:
-											if relic_match.group(2) not in test[relic_match.group(1)]:
-												test[relic_match.group(1)][relic_match.group(2)] = []
+										if relic_match.group(1) in tmp:
+											if relic_match.group(2) not in tmp[relic_match.group(1)]:
+												tmp[relic_match.group(1)][relic_match.group(2)] = []
 												rarity = relic_match.group(2)
 										else:
-											test[relic_match.group(1)] = {}
-											test[relic_match.group(1)][relic_match.group(2)] = []
+											tmp[relic_match.group(1)] = {}
+											tmp[relic_match.group(1)][relic_match.group(2)] = []
 											rarity = relic_match.group(2)
 											relicname = relic_match.group(1)
 									else:
-										test[relicname][rarity].append(text)
-							if i[0] == "sortieRewards":
-								test = []
+										tmp[relicname][rarity].append(text)
+							elif i[0] == "sortieRewards":
+								tmp = []
 								for x in table_rows:
 									text = x.get_text()
 									if not x.select('th'):
-										test.append(text)
-							if i[0] == "cetusRewards" or i[0] == "solarisRewards" or i[0] == "deimosRewards":
-								test = {}
+										tmp.append(text)
+							elif i[0] == "cetusRewards" or i[0] == "solarisRewards" or i[0] == "deimosRewards":
+								tmp = {}
 								bounty = None
 								stage = None
 								rotation = None
@@ -104,41 +98,38 @@ class DropTables:
 									if x.select('th'):
 										if "Bounty" in text:
 											bounty = text
-											test[bounty] = {}
+											tmp[bounty] = {}
 										elif "Rotation" in text:
 											rotation = text
-											test[bounty][rotation] = {}
+											tmp[bounty][rotation] = {}
 										elif "Stage" in text:
 											stage = text
-											test[bounty][rotation][stage] = []
+											tmp[bounty][rotation][stage] = []
 									else:
-										test[bounty][rotation][stage].append(text)
-							if i[0] in ["modByAvatar", "blueprintByAvatar", "resourceByAvatar", "sigilByAvatar", "additionalItemByAvatar"]:
+										tmp[bounty][rotation][stage].append(text)
+							elif i[0] in set("modByAvatar", "blueprintByAvatar", "resourceByAvatar", "sigilByAvatar", "additionalItemByAvatar"):
 								drop = None
 								for x in table_rows:
 									text = x.get_text()
 									itemtitles = re.match(r"^([\s\S]+?)(?:Additional Item|Mod|Resource|Blueprint\/Item|Sigil) Drop Chance: (\d{0,3}\.\d{0,3})\%$", text)
 									if itemtitles:
 										drop = itemtitles.group(1)
-										test[drop] = {}
-										test[drop]["chance"] = itemtitles.group(2)
-										test[drop]["data"] = []
+										tmp[drop] = {}
+										tmp[drop]["chance"] = itemtitles.group(2)
+										tmp[drop]["data"] = []
 									else:
-										test[drop]["data"].append(text)
-							if i[0] in ["modByDrop", "blueprintByDrop", "resourceByDrop"]:
+										tmp[drop]["data"].append(text)
+							elif i[0] in set("modByDrop", "blueprintByDrop", "resourceByDrop"):
 								drop = None
 								for x in table_rows:
 									text = x.get_text()
 									if x.select('th'):
 										if "Source" not in text:
 											drop = text
-											test[drop] = []
+											tmp[drop] = []
 									else:
-										test[drop].append(text)
-							self.data[i[0]]["data"] = test
-						fw = open(self.path, "w")
-						fw.write(json.dumps(self.data, sort_keys=True))
-						fw.close()
+										tmp[drop].append(text)
+							self.data[i[0]]["data"] = tmp
 	def searchKey(self, key, searched_value):
 		vals = []
 		for i in self.data[key]["data"]:
@@ -179,12 +170,12 @@ class CetusMessage(UpdatedMessage):
     async def refresh(self, cetus):
         em = EmbedTemplate(title="Plains of Eidolon", timestamp=datetime.utcnow())
         em.add_field(name="Status", value=str(cetus))
-        em.add_field(name="Time until new rotation", value="{:.0f} min".format(cetus.minutes_left() if cetus else 0.00))
+        em.add_field(name="Time until new rotation", value=f"{cetus.minutes_left() if cetus else 0.00:.0f} min")
         await self.message.edit(embed=em)
         if not self.lock:
             if cetus.isNight() and self.mention:
                 self.lock = True
-                self.notify_message = await self.message.channel.send("{} - {}".format(self.mention.name, self.mention.role.mention))
+                self.notify_message = await self.message.channel.send(f"{self.mention.name} - {self.mention.role.mention}")
                 self.client.loop.call_later(cetus.seconds_left()+60, self.callback)
     def callback(self,):
         self.client.loop.create_task(self.remove_message())
@@ -203,16 +194,10 @@ class FissureItem:
         return self.expiry_time-time.time()
     def __str__(self,):
         if type(self.node) == str:
-            return "{}\n{}\nExpires in {:.0f} min".format(
-            self.node.title()+", "+self.node.title(), 
-            "Expires on {}".format(Utilities.ts2string(self.expiry_time)),
-            self.expiresIn()//60
-            )
-        return "{}\n{}\nExpires in {:.0f} min".format(
-            self.node.planet.name.title()+", "+self.node.name.title(), 
-            "Expires on {}".format(Utilities.ts2string(self.expiry_time)),
-            self.expiresIn()//60
-            )
+            tmp = f"{self.node.title()}, {self.node.title()}"
+            return f"{tmp}\n{(f'Expires on {Utilities.ts2string(self.expiry_time)}')}\nExpires in {self.expiresIn()//60:.0f} min"
+        tmp = self.node.planet.name.title()+", "+self.node.name.title()
+        return f"{tmp}\n{(f'Expires on {Utilities.ts2string(self.expiry_time)}')}\nExpires in {self.expiresIn()//60:.0f} min"
 class FissureMessage(UpdatedMessage):
     def __init__(self, message, mentions):
         super().__init__(message, "fissures")
@@ -220,7 +205,7 @@ class FissureMessage(UpdatedMessage):
     async def refresh(self, fissures):
         em = EmbedTemplate(title="Fissures", timestamp=datetime.utcnow())
         for i in fissures:
-            em.add_field(name="{} {}".format(i.era, i.mission_type), value=str(i))
+            em.add_field(name=f"{i.era} {i.mission_type}", value=str(i))
         await self.message.edit(embed=em)
 class InvasionItem:
     def __init__(self, attacker, defender, node, starttime, status):
@@ -244,17 +229,16 @@ class InvasionMessage(UpdatedMessage):
         for i in invasions:
             vals = []
             if type(i.node) == str:
-                vals.append("{}, {}".format(i.node.title(), i.node.title()))
+                vals.append(f"{i.node.title()}, {i.node.title()}")
             else:
-                vals.append("{}, {}".format(i.node.planet.name.title(), i.node.name.title())) 
+                vals.append(f"{i.node.planet.name.title()}, {i.node.name.title()}")
             vals.append(i.start_time)
-            vals.append("{} vs {}".format(i.defender.faction,i.attacker.faction)),
+            vals.append(f"{i.defender.faction} vs {i.attacker.faction}"),
             vals.append(i.status)
 
             em.add_field(
-            name="{} vs {}".format(i.defender.rewards, i.attacker.rewards), 
-            value="{}\n{}\n{}\n{}\n\u200b".format(*vals
-            ))
+            name=f"{i.defender.rewards} vs {i.attacker.rewards}", 
+            value=f"{vals[0]}\n{vals[1]}\n{vals[2]}\n{vals[3]}\n\u200b")
         await self.message.edit(embed=em)
 class NightwaveItem:
     def __init__(self, start_time, expiry_time, name, daily=False):
@@ -280,13 +264,13 @@ class Sorties:
             self.missions = missions
     class SortieMission:
         def __init__(self, missionType, node, modifier):
-            self.missionType = missionType
+            self.mission_type = missionType
             self.node = node
             self.modifier = modifier
         def __str__(self,):
             if type(self.node) == str:
-                return "{}\n{}\n{}".format(self.missionType, self.node, self.modifier)
-            return "{}\n{}\n{}".format(self.missionType, self.node.name.title()+", "+self.node.planet.name.title(), self.modifier)
+                return f"{self.mission_type}\n{self.node}\n{self.modifier}"
+            return f"{self.mission_type}\n{(f'{self.node.name.title()}, {self.node.planet.name.title()}')}\n{self.modifier}"
 class SortieMessage(UpdatedMessage):
     def __init__(self, message):
         super().__init__(message, "sorties")
@@ -294,7 +278,7 @@ class SortieMessage(UpdatedMessage):
         em = EmbedTemplate(title="Sorties", timestamp=datetime.utcnow())
         count = 1
         for i in sortie.missions:
-            em.add_field(name="Mission {}".format(count), value=str(i))
+            em.add_field(name=f"Mission {count}", value=str(i))
             count+=1
         await self.message.edit(embed=em)
 class Worldstate():
@@ -324,16 +308,10 @@ class Worldstate():
                 defender_reward = "N/A"
                 reward_item = invasion["DefenderReward"]["countedItems"][0]["ItemType"]
                 translate = data_runtime["warframe"]["translate"]["items"]
-                defender_reward = "{}x {}".format(
-                    invasion["DefenderReward"]["countedItems"][0]["ItemCount"],
-                    translate[reward_item] if  reward_item in translate else reward_item
-                )
+                defender_reward = f"{invasion['DefenderReward']['countedItems'][0]['ItemCount']}x {translate[reward_item] if  reward_item in translate else reward_item}"
                 if invasion["AttackerReward"]:
                     reward_item = invasion["AttackerReward"]["countedItems"][0]["ItemType"]
-                    attack_reward = "{}x {}".format(
-                        invasion["AttackerReward"]["countedItems"][0]["ItemCount"],
-                        translate[reward_item] if  reward_item in translate else reward_item
-                    )
+                    attack_reward = f"{invasion['AttackerReward']['countedItems'][0]['ItemCount']}x { translate[reward_item] if  reward_item in translate else reward_item}"
                 attack_faction = invasion["AttackerMissionInfo"]["faction"].strip("FC_")
                 defender_faction = invasion["DefenderMissionInfo"]["faction"].strip("FC_")
                 goal = invasion["Goal"]*2
@@ -342,7 +320,7 @@ class Worldstate():
                 fraction_defender = round((goal-current)/goal*100,1)
                 attacker = InvasionOpp(attack_faction, attack_reward)
                 defender = InvasionOpp(defender_faction, defender_reward)
-                self.runtime["invasions"].append(InvasionItem(attacker, defender, node, Utilities.ts2string(start_time), "{}% vs {}%".format(fraction_defender, fraction_attacker)))
+                self.runtime["invasions"].append(InvasionItem(attacker, defender, node, Utilities.ts2string(start_time), f"{fraction_defender}% vs {fraction_attacker}%"))
     def getNightwave(self, parsing, data_runtime):
         translate = data_runtime["warframe"]["translate"]
         for nightwave in parsing["SeasonInfo"]["ActiveChallenges"]:

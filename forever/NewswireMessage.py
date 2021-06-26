@@ -37,7 +37,7 @@ class Newswire:
 								self.nw_items[i['id']] = NewswireItem(
 									i['id'],
 									i['title'],
-									"https://www.rockstargames.com/newswire/article/{}".format(i['id']),
+									f"https://www.rockstargames.com/newswire/article/{i['id']}",
 									i['preview_images_parsed']['newswire_block']['square'])
 							self.time = time.time()
 		else:
@@ -67,11 +67,7 @@ class NewswireMessage(UpdatedMessage):
         em = EmbedTemplate(title="GTA V Newswire", timestamp=datetime.utcnow(), inline=False)
         x = 1
         for i in newswire_data:
-            em.add_field(name="**{}**. {}...".format(x, i.title[:15]), value="[{}]({})\n\n[{}]({})\n".format(
-                "Link",
-                i.url,
-                "Image",
-                i.image
-            ))
+            em.add_field(name=f"**{x}**. {i.title[:15]}...",
+			value=f"[Link]({i.url})\n\n[Image]({i.image})\n")
             x+=1
         await self.message.edit(embed=em)

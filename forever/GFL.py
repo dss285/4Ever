@@ -13,23 +13,25 @@ class Doll:
         self.aliases = aliases
         self.production_timer = production_timer
     def getImagePath(self,):
-        return "{}/images/gfl/dolls/128x167_{}.png".format(config.asset_path, self.name.replace(" ", "_").replace("/",""))
+        file_name = self.name.replace(" ", "_").replace("/","")
+        return f"{config.asset_path}/images/gfl/dolls/128x167_{file_name}.png"
     def getEmbed(self,):
         em = EmbedTemplate(title=self.name)
         if self.production_timer:
-            em.add_field(name="Production Time", value="{}".format(datetime.timedelta(seconds=self.production_timer)), inline=False)
+            em.add_field(name="Production Time", value=f"{datetime.timedelta(seconds=self.production_timer)}", inline=False)
         
         em.add_field(name="Skill", value=self.skill if self.skill else "N/A")
         if self.formation_bonus and self.formation_tiles:
             formation_tiles = self.formation_tiles.replace("0", "⬛").replace("1", "⬜").replace("2", "🟦").replace("\\r\\n", "\r\n")
+            formation_bonus = self.formation_bonus.replace("\\r\\n", "\r\n")
             em.add_field(
                 name="Formation",
-                value="{}\n\n{}".format(formation_tiles, self.formation_bonus.replace("\\r\\n", "\r\n")),
+                value=f"{formation_tiles}\n\n{formation_bonus}",
                 inline=False
             )
         return em
     def __repr__(self):
-        return '<GFL.Doll name={}, id={}>'.format(self.name, self.doll_id)
+        return f'<GFL.Doll name={self.name}, id={self.doll_id}>'
 class Fairy:
     def __init__(self, fairy_id, name, stats, skill, production_timer):
         self.fairy_id = fairy_id
@@ -42,7 +44,7 @@ class Fairy:
         if self.production_timer:
             em.add_field(
                 name="Production Time",
-                value="{}".format(datetime.timedelta(seconds=self.production_timer)),
+                value=f"{datetime.timedelta(seconds=self.production_timer)}",
                 inline=False
             )
         if self.stats:

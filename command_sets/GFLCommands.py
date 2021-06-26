@@ -22,9 +22,9 @@ class ProductionDolls(Command):
     def __init__(self, command_key, client, database):
         self.client = client
         self.database = database
-        super().__init__(command_key, "production", """Production Dolls""", "{} {}".format(command_key, "production"), ["production","prod", "pr"])
+        super().__init__(command_key, "production", """Production Dolls""", f"{command_key} production", ["production","prod", "pr"])
     async def run(self, message, server):
-        pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")"
+        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")"
         reg = re.match(pattern, message.content)
         if reg:
             tmp = self.database.runtime["gfl"]["dolls"]
@@ -32,7 +32,7 @@ class ProductionDolls(Command):
             tmp_str = []
             
             for doll in sorted(tmp, key=lambda x: x.production_timer):
-                tmp_str.append("{} {} {}".format(datetime.timedelta(seconds=doll.production_timer), doll.name, doll.doll_type))
+                tmp_str.append(f"{datetime.timedelta(seconds=doll.production_timer)} {doll.name} {doll.doll_type}")
             lists = [tmp_str[i:i+30] for i in range(0, len(tmp_str), 30)]
             em = EmbedTemplate(title="Production Dolls")
             for i in lists:
@@ -42,9 +42,9 @@ class DollInfo(Command):
     def __init__(self, command_key, client, database):
         self.client = client
         self.database = database
-        super().__init__(command_key, "doll", """Info of dolls""", "{} {}".format(command_key, "doll"), ["d", "tdoll"])
+        super().__init__(command_key, "doll", """Info of dolls""", f"{command_key} doll", ["d", "tdoll"])
     async def run(self, message, server):
-        pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s(.+)"
+        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(.+)"
         reg = re.match(pattern, message.content)
         if reg:
             if reg.group(2):

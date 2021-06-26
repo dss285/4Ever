@@ -18,7 +18,7 @@ class MathCommands(Commands):
 class Probability(Command):
     def __init__(self, command_key, client):
         self.client = client
-        super().__init__(command_key, "probability", """Calculates probability""", "{} {}".format(command_key, "probability"), ["chances"])
+        super().__init__(command_key, "probability", """Calculates probability""", f"{command_key} probability", ["chances"])
     async def run(self, message, server):
         def is_number(s):
             try:
@@ -39,12 +39,10 @@ class Probability(Command):
                 chance = float(chance.content)/100
 
                 em = EmbedTemplate(title='Probability', description="Calculated probability")
-                em.add_field(name="Trials", value="{}".format(trials))
-                em.add_field(name="Successes", value="{}".format(successes))
-                em.add_field(name="Chance", value="{}".format(chance))
-                em.add_field(name="Probability", value="{}".format(
-                                Math.probability(trials, 
-                                                    successes, chance)))
+                em.add_field(name="Trials", value=f"{trials}")
+                em.add_field(name="Successes", value=f"{successes}")
+                em.add_field(name="Chance", value=f"{chance}")
+                em.add_field(name="Probability", value=f"{Math.probability(trials, successes, chance)}")
                 await message.channel.send(embed=em)
         except asyncio.TimeoutError:
             await message.channel.send(embed=EmbedTemplate(title="Probability", description="Timed out"))

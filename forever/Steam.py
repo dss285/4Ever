@@ -16,11 +16,11 @@ class Steam_Account():
         self.avatar_hash = avatar_hash
         self.time_created = time_created
     def get_full_avatar(self,):
-        return "{}/{}/{}_full.jpg".format(Steam_Account.steam_img_url, self.avatar_hash[:2], self.avatar_hash)
+        return f"{Steam_Account.steam_img_url}/{self.avatar_hash[:2]}/{self.avatar_hash}_full.jpg"
     def get_medium_avatar(self,):
-        return "{}/{}/{}_medium.jpg".format(Steam_Account.steam_img_url, self.avatar_hash[:2], self.avatar_hash)
+        return f"{Steam_Account.steam_img_url}/{self.avatar_hash[:2]}/{self.avatar_hash}_medium.jpg"
     def get_avatar(self,):
-        return "{}/{}/{}.jpg".format(Steam_Account.steam_img_url, self.avatar_hash[:2], self.avatar_hash)
+        return f"{Steam_Account.steam_img_url}/{self.avatar_hash[:2]}/{self.avatar_hash}.jpg"
 class Dota_Bare_Match():
     def __init__(self, id, players, lobby_type, timestamp):
         self.id = id
@@ -106,7 +106,7 @@ class Steam_API():
             params["key"] = self.api_key
             self.last_request_timestamp = time.time()
             async with aiohttp.ClientSession() as sess:
-                async with sess.get("{}/{}".format(self.api_url, endpoint), params=params) as resp:
+                async with sess.get(f"{self.api_url}/{endpoint}", params=params) as resp:
                     if resp.status == 200:
                         data = json.loads(await resp.text())
                         return data

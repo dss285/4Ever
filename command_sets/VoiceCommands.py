@@ -23,11 +23,11 @@ class VoiceCommands(Commands):
 class Play(Command):
     def __init__(self, command_key, client):
         self.client = client
-        super().__init__(command_key, "play", """Play music, by giving URLs""", "{} {} {}".format(command_key, "play", "*<url>*"), ["test"])
+        super().__init__(command_key, "play", """Play music, by giving URLs""", f"{command_key} play *<url>*", ["test"])
 
         
     async def run(self, message, server):
-        pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s(http[s]?:\/\/(www\.)?(youtube\.com|youtu\.be)\/(watch\?.*v=)?.*)"
+        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(http[s]?:\/\/(www\.)?(youtube\.com|youtu\.be)\/(watch\?.*v=)?.*)"
         reg = re.match(pattern, message.content)
         if reg:
             if message.author.voice.channel:
@@ -43,21 +43,21 @@ class Play(Command):
                         await self.run(message, server)
 class Resume(Command):
     def __init__(self, command_key):
-        super().__init__(command_key, "resume", """Resume paused track""", "{} {}".format(command_key, "resume"), [])
+        super().__init__(command_key, "resume", """Resume paused track""", f"{command_key} resume", [])
     async def run(self, message, server):
         if server:
             if server.voice:
                 await server.voice.resume()
 class Pause(Command):
     def __init__(self, command_key):
-        super().__init__(command_key, "pause", """Pause currently playing track""", "{} {}".format(command_key, "pause"), [])
+        super().__init__(command_key, "pause", """Pause currently playing track""", f"{command_key} pause", [])
     async def run(self, message, server):
         if server:
             if server.voice:
                 await server.voice.pause()
 class Skip(Command):
     def __init__(self, command_key):
-        super().__init__(command_key, "skip", """Skip currently playing track""", "{} {}".format(command_key, "skip"), [])
+        super().__init__(command_key, "skip", """Skip currently playing track""", f"{command_key} skip", [])
     async def run(self, message, server):
         if server:
             if server.voice:
@@ -65,7 +65,7 @@ class Skip(Command):
 class Leave(Command):
     def __init__(self, command_key, client):
         self.client = client
-        super().__init__(command_key, "leave", """Leaves the channel""", "{} {}".format(command_key, "leave"), [])
+        super().__init__(command_key, "leave", """Leaves the channel""", f"{command_key} leave", [])
     async def run(self, message, server):
         vc = next((x for x in self.client.voice_clients if message.guild == x.guild), None)
         if vc.is_connected():
@@ -78,9 +78,9 @@ class Leave(Command):
 class Sound(Command):
     def __init__(self, command_key, client):
         self.client = client
-        super().__init__(command_key, "sound", """Plays a certain sound""", "{} {} {}".format(command_key, "sound", "<*list*|*sound name*>"), [])
+        super().__init__(command_key, "sound", """Plays a certain sound""", f"{command_key} sound <*list*|*sound name*>", [])
     async def run(self, message, server):
-        pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s([a-zA-Z0-9]+)"
+        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s([a-zA-Z0-9]+)"
         reg = re.match(pattern, message.content)
         if reg:
             if message.author.voice.channel:

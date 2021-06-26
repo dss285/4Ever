@@ -22,9 +22,9 @@ class ForeverCommands(Commands):
 class CrissCross(Command):
     def __init__(self, command_key, client):
         self.client = client
-        super().__init__(command_key, "crisscross", """Start a game of crisscross""", "{} {} {}".format(command_key, "crisscross", "*<challenged user>*"), [])
+        super().__init__(command_key, "crisscross", """Start a game of crisscross""", f"{command_key} crisscross *<challenged user>*", [])
     async def run(self, message, server):
-        pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s(?:<@!?(?:\d+)>)\s?(\d{1,2})?"
+        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(?:<@!?(?:\d+)>)\s?(\d{1,2})?"
         reg = re.match(pattern, message.content)
         if reg:
             if len(message.mentions) == 1:
@@ -45,9 +45,9 @@ class GTANewswire(Command):
     def __init__(self, command_key, database, newswire):
         self.database = database
         self.newswire = newswire
-        super().__init__(command_key, "gtanw", """GTA V newswire""", "{} {}".format(command_key, "gtanw"), [])
+        super().__init__(command_key, "gtanw", """GTA V newswire""", f"{command_key} gtanw", [])
     async def run(self, message, server):
-        pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s?(message)?"
+        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s?(message)?"
         reg = re.match(pattern, message.content)
         if reg:
             if reg.group(2):
@@ -66,6 +66,6 @@ class GTANewswire(Command):
 class RemindMe(Command):
     def __init__(self, command_key, client):
         self.client = client
-        super().__init__(command_key, "remindme", """Remind me""", "{} {} {} {}".format(command_key, "remindme", "*<minutes>*", "*<name>*"))
+        super().__init__(command_key, "remindme", """Remind me""", f"{command_key} *remindme* *<minutes>* *<name>*")
     async def run(self, message, server):
         pass

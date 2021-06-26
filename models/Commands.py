@@ -10,18 +10,15 @@ class Commands:
     def __help(self,):
         desc_string = self.description+"\n\n"
         for i in self.command_list.values():
-            desc_string += """
-            **Command:**
-            {} {}  -  {}
-            **Usage:**
-            {}
-            **Aliases:**
-            ```{}```
-            """.format(self.command_key, i.name, i.description, i.usage, ",".join(i.aliases))
+            desc_string += f"""
+            **Command:** {self.command_key} {i.name}  -  {i.description}
+            **Usage:** {i.usage}
+            **Aliases:** ```{",".join(i.aliases)}```
+            """
         embed = EmbedTemplate(title=self.module_name, description=desc_string)
         return embed
     async def parse(self, message, server):
-        if message.content.startswith("{} {}".format(self.command_key, "help")):
+        if message.content.startswith(f"{self.command_key} help"):
             await message.channel.send(embed=self.help_embed)
         else:
             tobreak = False
@@ -29,7 +26,7 @@ class Commands:
                 if tobreak:
                     break
                 for x in command.aliases:
-                    if message.content.startswith("{} {}".format(self.command_key, x)):
+                    if message.content.startswith(f"{self.command_key} {x}"):
                         await command.run(message, server)
                         tobreak = True
                         break
@@ -39,7 +36,7 @@ class Commands:
 class Command:
     def __init__(self, command_key, name, description, usage, aliases):
         self.aliases = aliases
-        self.command_key = command_key
+        self.prefix = command_key
         self.name = name
         self.description = description
         self.usage = usage

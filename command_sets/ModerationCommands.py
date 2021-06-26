@@ -18,9 +18,9 @@ class ModerationCommands(Commands):
             await super().parse(message, server)
 class Purge(Command):
     def __init__(self, command_key):
-        super().__init__(command_key, "purge", """Purge channel of X amount of messages""", "{} {} {}".format(command_key, "purge", "*<1-99>*"), ["empty"])
+        super().__init__(command_key, "purge", """Purge channel of X amount of messages""", f"{command_key} purge *<1-99>*", ["empty"])
     async def run(self, message, server):
-        pattern = re.escape(self.command_key)+"\s("+"|".join(self.aliases)+")\s(\d+)"
+        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(\d+)"
         reg = re.match(pattern, message.content)
         if reg:
             if reg.group(2):

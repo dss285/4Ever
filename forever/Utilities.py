@@ -114,3 +114,12 @@ def run_in_executor(function):
         self = args[0]
         return await self.client.loop.run_in_executor(None, run_function)
     return __decorator
+class ArgParse():
+    STRING_ARG = r"(\S)"
+    INT_ARG = r"(\d+)"
+    URL_PREFIX = r"(http[s]?:\/\/(www\.)?"
+    @staticmethod
+    def _construct_regex(prefix, command, args):
+        args = "\s".join(args)
+        regex = f"{prefix}\s{command}\s{args}"
+        return regex
