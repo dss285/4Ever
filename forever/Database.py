@@ -6,7 +6,7 @@ from models.UpdatedMessage import UpdatedMessage
 from forever.Steam import Steam_API, Dota_Match, Dota_Match_Player
 from forever.Utilities import run_in_executor, log
 from forever.Warframe import CetusMessage, FissureMessage, SortieMessage, NightwaveMessage, InvasionMessage, SolSystem
-from forever.NewswireMessage import NewswireMessage
+from forever.Newswire import NewswireMessage
 
 from models.Server import Server
 from forever.GFL import Doll, Fairy
