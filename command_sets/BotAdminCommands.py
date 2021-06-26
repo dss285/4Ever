@@ -2,6 +2,7 @@ import asyncio
 import discord
 from models.EmbedTemplate import EmbedTemplate
 from models.Commands import Commands, Command
+from forever.Utilities import Args
 import subprocess
 import re
 
@@ -25,39 +26,39 @@ class ShellCommand(Command):
     def __init__(self, command_key, client):
         self.client = client
         super().__init__(command_key, "shell", """Shell""", f"{command_key} shell *shell command*", ['bash', 'sh'])
+        self.args = Args(shell=Args.ANY_ARG)
+        self.args.set_pattern(command_key, self.aliases)
     async def run(self, message, server):
-        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(.+)"
-        reg = re.match(pattern, message.content)
-        if reg:
-            if reg.group(2):
-                splitted = reg.group(2).split(" ")
-                output = subprocess.run(splitted, stdout=subprocess.PIPE, text=True, universal_newlines=True)
-                if output.returncode == 0:
-                    if len(output.stdout) < 1975:
-                        await message.reply(f"""```{output.stdout}```""")
-                    else:
-                        fo = open("tmp.txt", "w+")
-                        fo.write(output.stdout)
-                        fo.close()
-                        await message.reply(file=discord.File("tmp.txt"))
+        parse = self.args.parse(message.content)
+        if parse:
+            splitted = parse["shell"].split(" ")
+            output = subprocess.run(splitted, stdout=subprocess.PIPE, text=True, universal_newlines=True)
+            if output.returncode == 0:
+                if len(output.stdout) < 1975:
+                    await message.reply(f"""```{output.stdout}```""")
                 else:
-                    await message.reply(f"Error from shell command: {output.stderr}")
+                    fo = open("tmp.txt", "w+")
+                    fo.write(output.stdout)
+                    fo.close()
+                    await message.reply(file=discord.File("tmp.txt"))
+            else:
+                await message.reply(f"Error from shell command: {output.stderr}")
 class EvalCommand(Command):
     def __init__(self, command_key, client):
         self.client = client
         super().__init__(command_key, "eval", """Eval""", f"{command_key} eval *evaled statement*", ['ev'])
+        self.args = Args(shell=Args.ANY_ARG)
+        self.args.set_pattern(command_key, self.aliases)
     async def run(self, message, server):
-        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(.+)"
-        reg = re.match(pattern, message.content)
-        if reg:
-            if reg.group(2):
-                output = str(eval(reg.group(2)))
-                if len(output) < 1975:
-                    await message.reply(f"""```{output}```""")
-                else:
-                    fo = open("tmp.txt", "w+")
-                    fo.write(output)
-                    fo.close()
-                    await message.reply(file=discord.File("tmp.txt"))
+        parse = self.args.parse(message.content)
+        if parse:
+            output = str(eval(parse["shell"]))
+            if len(output) < 1975:
+                await message.reply(f"""```{output}```""")
+            else:
+                fo = open("tmp.txt", "w+")
+                fo.write(output)
+                fo.close()
+                await message.reply(file=discord.File("tmp.txt"))
 
 

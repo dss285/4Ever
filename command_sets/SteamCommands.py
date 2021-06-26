@@ -3,9 +3,11 @@ import discord
 from models.EmbedTemplate import EmbedTemplate
 from models.Commands import Commands, Command
 from forever.Steam import Steam_API
+from forever.Utilities import Args
 import re
 
 class SteamCommands(Commands):
+    STEAM_URL_REGEX = "(?:(?P<{}>\d+)|(?:https:\/\/steamcommunity\.com\/(?:profiles\/(?P<steamid>\d+)|id\/(?P<profile>.+))))"
     def __init__(self, module_name, description, command_key, client, database, steam_api):
         self.client = client
         self.database = database
@@ -29,17 +31,18 @@ class DotaProfile(Command):
         self.database = database
         self.steam_api = steam_api
         super().__init__(command_key, "dotaprofile", """Testing""", f"{command_key} dotaprofile", [])
+        self.args = Args(steamarg=SteamCommands.STEAM_URL_REGEX)
+        self.args.set_pattern(command_key, self.aliases)
     async def run(self, message, server):
-        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")"+"\s(?:(\d+)|(?:https:\/\/steamcommunity\.com\/(?:profiles\/(\d+)|id\/(.+))))"
-        reg = re.match(pattern, message.content)
-        if reg:
+        parse = self.args.parse(message.content)
+        if parse:
             steam_32id = None
             steam_64id = None
 
-            vanity_url = reg.group(4)
+            vanity_url = parse.get("profile")
            
-            steam_profile_id = reg.group(3)
-            steam_id = reg.group(2)
+            steam_profile_id = parse.get("steamid")
+            steam_id = parse.get('steamarg')
             if vanity_url is not None:
                 if vanity_url[len(vanity_url)-1] == '/':
                     vanity_url = vanity_url[:len(vanity_url)-1]
@@ -67,19 +70,20 @@ class DotaHeroProfile(Command):
         self.database = database
         self.steam_api = steam_api
         super().__init__(command_key, "dotaheroprofile", """Testing""", f"{command_key} dotaheroprofile", [])
+        self.args = Args(steamarg=SteamCommands.STEAM_URL_REGEX, hero=Args.ANY_ARG)
+        self.args.set_pattern(command_key, self.aliases)
     async def run(self, message, server):
-        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(?:(\d+)|(?:https:\/\/steamcommunity\.com\/(?:profiles\/(\d+)|id\/(\S+)))).?\s(.+)"
-        reg = re.match(pattern, message.content)
-        if reg:
+        parse = self.args.parse(message.content)
+        if parse:
             steam_32id = None
             steam_64id = None
-            hero_name = reg.group(5).title()
+            hero_name = parse.get("hero")
             hero_id = self.database.runtime["dota"]["heroes"]["name"].get(hero_name)
 
             if hero_id:
-                vanity_url = reg.group(4)
-                steam_profile_id = reg.group(3)
-                steam_id = reg.group(2)
+                vanity_url = parse.get("profile")
+                steam_profile_id = parse.get("steamid")
+                steam_id = parse.get("steamarg")
                 if vanity_url is not None:
                     if vanity_url[len(vanity_url)-1] == '/':
                         vanity_url = vanity_url[:len(vanity_url)-1]

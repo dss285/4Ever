@@ -21,50 +21,49 @@ class WarframeCommands(Commands):
         command_list["relics"] = RelicSearch(command_key, self.droptables, self.client)
         return command_list
 class WorldState(Command):
+    UPDATED_MESSAGE_REGEX = "(?P<{}>nightwave|sorties|poe|invasions|fissures)"
     def __init__(self, command_key, database):
         self.database = database
         super().__init__(command_key, "worldstate", """Creates an message where X thing is updated from Warframe Worldstate""", f"{command_key} worldstate *<nightwave|sorties|poe|invasions|fissures>*", ["worldstate"])
+        self.args = Args(message=WorldState.UPDATED_MESSAGE_REGEX)
+        self.args.set_pattern(command_key, self.aliases)
     async def run(self, message, server):
         if message.author.guild_permissions.administrator:
-            pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(nightwave|sorties|poe|invasions|fissures)"
-            reg = re.match(pattern, message.content)
-            if reg:
+            parse = self.args.parse(message.content)
+            if parse:
                 em = EmbedTemplate(title="WorldState Message", description="Updating soon..")
-                if reg.group(2):
-                    new_message = None
-                    msg_type = None
-                    msg = await message.channel.send(embed=em)
-                    if reg.group(2) == "nightwave":
-                        new_message = NightwaveMessage(msg)
-                        
-                    elif reg.group(2) == "sorties":
-                        new_message = SortieMessage(msg)
-                    elif reg.group(2) == "fissures":
-                        new_message = FissureMessage(msg, [])
-                    elif reg.group(2) == "poe":
-                        new_message = CetusMessage(msg, [])
-                    elif reg.group(2) == "invasions":
-                        new_message = InvasionMessage(msg, [])
-                    if new_message:
-                        
-                        msg_type = reg.group(2)
-                        await self.database.create_updated_message(server.server_id, msg_type, msg.channel.id, msg.id)
-                        server.updated_messages["name"][msg_type] = new_message
-                        server.updated_messages["id"][msg.id] = new_message
+                new_message = None
+                msg_type = None
+                msg = await message.channel.send(embed=em)
+                if parse.get("message") == "nightwave":
+                    new_message = NightwaveMessage(msg)
+                elif parse.get("message") == "sorties":
+                    new_message = SortieMessage(msg)
+                elif parse.get("message") == "fissures":
+                    new_message = FissureMessage(msg, [])
+                elif parse.get("message") == "poe":
+                    new_message = CetusMessage(msg, [])
+                elif parse.get("message") == "invasions":
+                    new_message = InvasionMessage(msg, [])
+                if new_message:
+                    
+                    msg_type = parse.get("message")
+                    await self.database.create_updated_message(server.server_id, msg_type, msg.channel.id, msg.id)
+                    server.updated_messages["name"][msg_type] = new_message
+                    server.updated_messages["id"][msg.id] = new_message
 class RelicSearch(Command):
     def __init__(self, command_key, droptables, client):
         self.client = client
         self.droptables = droptables
         super().__init__(command_key, "relic", """Relic search""", f"{command_key} relic *<relic name>*", ["relicsearch"])
+        self.args = Args(relic=Args.ANY_ARG)
+        self.args.set_pattern(command_key, self.aliases)
     async def run(self, message, server):
-        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(.*)"
-        reg = re.match(pattern, message.content)
+        parse = self.args.parse(message.content)
         xx = time.time()
-        if reg:
+        if parse:
             if not self.droptables.data or xx-self.droptables.timeupdated > self.droptables.interval:
-                asyncio.create_task(self.droptables.getData())
-            while not self.droptables.data:
-                await asyncio.sleep(3)
-            await message.channel.send(embed=self.droptables.relicSearch(reg.group(2)))
+                await self.droptables.getData()
+            await message.channel.send(embed=self.droptables.relicSearch(parse.get("relic")))
 
 

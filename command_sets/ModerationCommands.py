@@ -19,11 +19,11 @@ class ModerationCommands(Commands):
 class Purge(Command):
     def __init__(self, command_key):
         super().__init__(command_key, "purge", """Purge channel of X amount of messages""", f"{command_key} purge *<1-99>*", ["empty"])
+        self.args = Args(limit=Args.INT_ARG)
+        self.args.set_pattern(command_key, self.aliases)
     async def run(self, message, server):
-        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(\d+)"
-        reg = re.match(pattern, message.content)
-        if reg:
-            if reg.group(2):
-                await message.delete()
-                await message.channel.purge(limit=int(reg.group(2)))
+        parse = self.parse(message.content)
+        if parse:
+            await message.delete()
+            await message.channel.purge(limit=int(parse["limit"]))
         

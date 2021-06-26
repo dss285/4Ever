@@ -1,6 +1,8 @@
+from typing import Union
 import pytz
 import aiohttp
 import time
+import re
 import asyncio
 import discord
 from datetime import datetime
@@ -114,12 +116,43 @@ def run_in_executor(function):
         self = args[0]
         return await self.client.loop.run_in_executor(None, run_function)
     return __decorator
-class ArgParse():
-    STRING_ARG = r"(\S)"
-    INT_ARG = r"(\d+)"
-    URL_PREFIX = r"(http[s]?:\/\/(www\.)?"
-    @staticmethod
-    def _construct_regex(prefix, command, args):
-        args = "\s".join(args)
-        regex = f"{prefix}\s{command}\s{args}"
+class Args():
+    #?P<first_name>
+    ANY_ARG = "(?P<{}>.+)"
+    STRING_ARG = "(?P<{}>\S+)"
+    INT_ARG = "(?P<{}>\d+)"
+    MENTION_ARG = "(?P<{}><@[!|&]?(?:\d+)>)"
+    CHANNEL_MENTION_ARG = "(?P<{}>\<\#?\d+\>)"
+    OPTIONAL_STRING_ARG = "?(?P<{}>\S+)?"
+    OPTIONAL_INT_ARG = "?(?P<{}>\d+)?"
+    URL_PREFIX = "(http[s]?:\/\/(www\.)?"
+
+    def __init__(self, *args, **kwargs) -> None:
+        self.names = []
+        self.args = []
+        for name, arg in kwargs.items():
+            self.names.append(name)
+            self.args.append(arg.format(name))
+        self.pattern = None
+    def set_pattern(self, prefix, aliases) -> None:
+        self.pattern = self.construct_regex(prefix, aliases)
+    def construct_regex(self, prefix: str, aliases: list) -> str:
+        prefix = re.escape(prefix)
+        aliases = f"(?P<command>{'|'.join(aliases)})"
+        args = r"\s".join(self.args)
+        regex = f"{prefix}\s{aliases}\s{args}"
         return regex
+    def parse(self, content: str) -> Union[dict, None]:
+        reg = re.match(self.pattern, content)
+        if reg:
+            return reg.groupdict()
+        else:
+            return None
+if __name__ == "__main__":
+    custom = "(?:(?P<{}>\d+)|(?:https:\/\/steamcommunity\.com\/(?:profiles\/(?P<steamid>\d+)|id\/(?P<profile>.+))))"
+    ar = Args(steam=custom)
+    ar.set_pattern("$gfl", ["doll", "d"])
+    print(ar.pattern)
+    print(ar.parse("$gfl doll 213213123"))
+    print(ar.parse("$gfl doll https://steamcommunity.com/id/dss285-aeon/"))
+    print(ar.parse("$gfl doll https://steamcommunity.com/profiles/21312312122"))

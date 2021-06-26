@@ -38,50 +38,50 @@ class NSFWCommands(Commands):
 class Rule34(Command):
     def __init__(self, command_key):
         super().__init__(command_key, "rule34", """Rule34 Search""", f"{command_key} rule34 *<tags>*", ["r34"])
+        self.args = Args(tags=Args.ANY_ARG)
+        self.args.set_pattern(command_key, self.aliases)
     async def run(self, message, server):
-        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(.+)"
-        reg = re.match(pattern, message.content)
-        if reg:
-            if reg.group(2):
-                em = await NSFW.rule34XXX(reg.group(2))
-                await message.channel.send(embed=em)    
+        parse = self.parse(message.content)
+        if parse:
+            em = await NSFW.rule34XXX(parse["tags"])
+            await message.channel.send(embed=em)    
 class Realbooru(Command):
     def __init__(self, command_key):
         super().__init__(command_key, "realbooru", """Realbooru Search""", f"{command_key} realbooru *<tags>*", ["real"])
+        self.args = Args(tags=Args.ANY_ARG)
+        self.args.set_pattern(command_key, self.aliases)
     async def run(self, message, server):
-        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(.+)"
-        reg = re.match(pattern, message.content)
-        if reg:
-            if reg.group(2):
-                em = await NSFW.realbooru(reg.group(2))
-                await message.reply(embed=em)
+        parse = self.parse(message.content)
+        if parse:
+            em = await NSFW.realbooru(parse["tags"])
+            await message.channel.send(embed=em)   
 class Safebooru(Command):
     def __init__(self, command_key):
         super().__init__(command_key, "safebooru", """Safebooru Search""", f"{command_key} safebooru *<tags>*", ["safe"])
+        self.args = Args(tags=Args.ANY_ARG)
+        self.args.set_pattern(command_key, self.aliases)
     async def run(self, message, server):
-        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(.+)"
-        reg = re.match(pattern, message.content)
-        if reg:
-            if reg.group(2):
-                em = await NSFW.safebooru(reg.group(2))
-                await message.reply(embed=em)
+        parse = self.parse(message.content)
+        if parse:
+            em = await NSFW.safebooru(parse["tags"])
+            await message.channel.send(embed=em)   
 class Gelbooru(Command):
     def __init__(self, command_key):
         super().__init__(command_key, "gelbooru", """Gelbooru Search""", f"{command_key} gelbooru *<tags>*", ["gel"])
+        self.args = Args(tags=Args.ANY_ARG)
+        self.args.set_pattern(command_key, self.aliases)
     async def run(self, message, server):
-        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(.+)"
-        reg = re.match(pattern, message.content)
-        if reg:
-            if reg.group(2):
-                em = await NSFW.gelbooru(reg.group(2))
-                await message.reply(embed=em)
+        parse = self.parse(message.content)
+        if parse:
+            em = await NSFW.gelbooru(parse["tags"])
+            await message.channel.send(embed=em)   
 class Danbooru(Command):
     def __init__(self, command_key):
         super().__init__(command_key, "danbooru", """Danbooru Search""", f"{command_key} danbooru *<tags>*", ["dan"])
+        self.args = Args(tags=Args.ANY_ARG)
+        self.args.set_pattern(command_key, self.aliases)
     async def run(self, message, server):
-        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(.+)"
-        reg = re.match(pattern, message.content)
-        if reg:
-            if reg.group(2):
-                em = await NSFW.danbooru(reg.group(2))
-                await message.reply(embed=em)
+        parse = self.parse(message.content)
+        if parse:
+            em = await NSFW.danbooru(parse["tags"])
+            await message.channel.send(embed=em)

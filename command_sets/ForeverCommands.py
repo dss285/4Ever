@@ -1,6 +1,7 @@
 import asyncio
 import discord
 from forever.CrissCross import CrissCross as CC
+from forever.Utilities import Args
 from forever.NewswireMessage import NewswireMessage, Newswire
 from models.Commands import Commands, Command
 from models.EmbedTemplate import EmbedTemplate
@@ -23,18 +24,18 @@ class CrissCross(Command):
     def __init__(self, command_key, client):
         self.client = client
         super().__init__(command_key, "crisscross", """Start a game of crisscross""", f"{command_key} crisscross *<challenged user>*", [])
+        self.args = Args(mention=Args.MEMBER_MENTION_ARG, size=Args.OPTIONAL_INT_ARG)
+        self.args.set_pattern(command_key, self.aliases)
     async def run(self, message, server):
         pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(?:<@!?(?:\d+)>)\s?(\d{1,2})?"
-        reg = re.match(pattern, message.content)
-        if reg:
+        parse = self.args.parse(message.content)
+        if parse:
             if len(message.mentions) == 1:
                 user = message.mentions[0]
                 await message.channel.send("Would you like to accept this challenge ? (y) for yes, and anything to reject")
                 response = await self.client.wait_for('message', timeout=30.0, check=lambda x: x.author == user and x.channel == message.channel)
                 if "y" in response.content.lower():
-                    size = 3
-                    if reg.group(2):
-                        size = int(reg.group(2))
+                    size = int(parse.get("size")) or 3
                     game = CC(message.author, response.author, self.client, size)
                     await game.StartGame(message.channel)
                 else:
@@ -46,11 +47,12 @@ class GTANewswire(Command):
         self.database = database
         self.newswire = newswire
         super().__init__(command_key, "gtanw", """GTA V newswire""", f"{command_key} gtanw", [])
+        self.args = Args(message=Args.OPTIONAL_STRING_ARG)
+        self.args.set_pattern(command_key, self.aliases)
     async def run(self, message, server):
-        pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s?(message)?"
-        reg = re.match(pattern, message.content)
-        if reg:
-            if reg.group(2):
+        parse = self.args.parse(message.content)
+        if parse:
+            if parse.get("message") == "message":
                 em = EmbedTemplate(title="GTANW Message", description="Updating soon..")
                 msg = await message.channel.send(embed=em)
                 nwmessage = NewswireMessage(msg)
