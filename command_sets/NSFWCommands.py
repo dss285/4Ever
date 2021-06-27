@@ -6,7 +6,7 @@ import re
 from forever import NSFW
 from models.EmbedTemplate import EmbedTemplate
 from models.Commands import Commands, Command
-
+from forever.Utilities import Args
 class NSFWCommands(Commands):
     def __init__(self, module_name, description, command_key):
         command_list = self.fetch_commands(command_key)
