@@ -24,7 +24,7 @@ class CrissCross(Command):
     def __init__(self, command_key, client):
         self.client = client
         super().__init__(command_key, "crisscross", """Start a game of crisscross""", f"{command_key} crisscross *<challenged user>*", [])
-        self.args = Args(mention=Args.MEMBER_MENTION_ARG, size=Args.OPTIONAL_INT_ARG)
+        self.args = Args(mention=Args.MENTION_ARG, size=Args.OPTIONAL_INT_ARG)
         self.args.set_pattern(command_key, self.aliases)
     async def run(self, message, server):
         pattern = re.escape(self.prefix)+"\s("+"|".join(self.aliases)+")\s(?:<@!?(?:\d+)>)\s?(\d{1,2})?"
