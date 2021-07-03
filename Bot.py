@@ -49,7 +49,7 @@ class Bot(discord.Client):
         self.server_sync_task = None
     async def basic_loop(self,):
         await self.wait_until_ready()
-        await self.database.init_runtime(self)
+        await self.database.init_runtime()
         self.server_sync_task = self.loop.create_task(self.server_sync())
         while True:
             try:

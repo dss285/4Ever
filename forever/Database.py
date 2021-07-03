@@ -11,7 +11,7 @@ from forever.Newswire import NewswireMessage
 from models.Server import Server
 from forever.GFL import Doll, Fairy
 class Database:
-    def __init__(self, host, user, password, database, client):
+    def __init__(self, host, user, password, database, client) -> None:
         self.host = host
         self.user = user
         self.password = password
@@ -56,18 +56,18 @@ class Database:
                                   database=self.database,
                                   port=5432)
     @run_in_executor
-    def query(self, sql):
+    def query(self, sql) -> None:
         with self.connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
             cursor.execute(sql)
         self.connection.commit()
     @run_in_executor
-    def get_data(self,):
+    def get_data(self,) -> dict:
         results = {}
         for i, j in self.tables.items():
             for x in j:
                 results[x] = self.get_table_rows(f'\"{i}\".{x}')
         return results
-    def get_table_rows(self, tabletype):
+    def get_table_rows(self, tabletype) -> dict:
         results = None
         with self.connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
             cursor.execute(f"SELECT * FROM {tabletype}")
@@ -75,13 +75,13 @@ class Database:
         self.connection.commit()
         return results
 class Database_Manager(Database):
-    def __init__(self, host, user, password, database, client):
+    def __init__(self, host :str, user:str, password:str, database:str, client) -> None:
         super().__init__(host, user, password, database, client)
         self.runtime = {}
         self.saved_messages = set()
         self.mentions = []
         self.init_done = False
-    def structure(self,):
+    def structure(self,) -> None:
         self.runtime["warframe"] = {}
         self.runtime["warframe"]["nightwave"] = []
         self.runtime["warframe"]["invasions"] = []
@@ -99,7 +99,7 @@ class Database_Manager(Database):
         self.runtime["gfl"]["equipment"] = []
         self.runtime["dota"] = {}
         self.runtime["servers"] = {}
-    async def get_server(self, server_id, data, client):
+    async def get_server(self, server_id, data, client) -> None:
         log_id = next((i["logchannel_id"] for i in data["discord_servers"] if i["server_id"] == server_id), None)
         discord_server = client.get_guild(server_id)
         logchannel = client.get_channel(log_id) if log_id else None
@@ -166,14 +166,14 @@ class Database_Manager(Database):
                             updated_messages[message_type] = NewswireMessage(message)
         server = Server(server_id, discord_server, logchannel, updated_messages, notifications, joinable_roles, role_messages)
         self.runtime["servers"][server_id] = server
-    async def update_runtime(self, client):
+    async def update_runtime(self, client) -> None:
         data = self.get_data()
 
         if "gfl" in self.runtime:
             self.gfl(data)
         if "warframe" in self.runtime:
             self.warframe(data)
-    def gfl(self, data):
+    def gfl(self, data) -> None:
         self.runtime["gfl"]["dolls"].clear()
         self.runtime["gfl"]["equipment"].clear()
         for d in data["gfl_dolls"]:
@@ -186,7 +186,7 @@ class Database_Manager(Database):
             d["aliases"].split("|") if d["aliases"] else [],
             d["production_timer"])
             self.runtime["gfl"]["dolls"].append(doll)
-    def warframe(self, data):
+    def warframe(self, data) -> None:
         self.runtime["warframe"]["translate"]["solsystem"]["planets"].clear()
         self.runtime["warframe"]["translate"]["solsystem"]["nodes"].clear()
         for item in data["wf_missions"]:
@@ -202,7 +202,7 @@ class Database_Manager(Database):
         for item in data["wf_solsystem_nodes"]:
             self.runtime["warframe"]["translate"]["solsystem"]["nodes"].append(SolSystem.SolNode(item["node_id"], item["name"],
             next(planet for planet in self.runtime["warframe"]["translate"]["solsystem"]["planets"] if planet.id == item["planet_id"])))
-    def dota(self, data):
+    def dota(self, data) -> None:
         match_players = {}
         dota_heroes = {"id" : {}, "name" : {}}
         for i in data["dota_heroes"]:
@@ -252,12 +252,12 @@ class Database_Manager(Database):
             )
             Steam_API.cache.add(f"match_details_{dota_match.id}", dota_match)
         self.runtime["dota"]["heroes"] = dota_heroes
-    async def init_runtime(self, client):
+    async def init_runtime(self,) -> None:
         self.structure()
         data = await self.get_data()
         #Server Translation
         for i in data["discord_servers"]:
-            await self.get_server(i["server_id"], data, client)
+            await self.get_server(i["server_id"], data, self.client)
         #GFL Translation
         self.gfl(data)
         #WF Translation
@@ -266,21 +266,21 @@ class Database_Manager(Database):
         self.dota(data)
 
         self.init_done = True
-    def delete_joinable_role(self, role_id):
+    def delete_joinable_role(self, role_id : int) -> None:
         self.query(self.query_formats["delete_where"].format(
             schema=self.forever,
             table="discord_joinable_roles",
             column="role_id",
             value=role_id
         ))
-    async def delete_updated_message(self, message_id):
+    async def delete_updated_message(self, message_id : int) -> None:
         await self.query(self.query_formats["delete_where"].format(
             schema=self.forever,
             table="discord_updated_messages",
             column="message_id",
             value=message_id
         ))
-    async def delete_role_message(self, message_id=None, role_id=None):
+    async def delete_role_message(self, message_id : int=None, role_id : int=None) -> None:
         query = None
         if message_id and role_id:
             query = self.query_formats["delete_where_and"].format(
@@ -307,7 +307,7 @@ class Database_Manager(Database):
             )
         if query:
             await self.query(query)
-    async def delete_notification(self, notification_name, server_id):
+    async def delete_notification(self, notification_name, server_id : int) -> None:
         await self.query(self.query_formats["delete_where_and"].format(
             schema=self.forever,
             table="discord_notifications",
@@ -316,49 +316,49 @@ class Database_Manager(Database):
             column_2="server_id",
             value_2=server_id
         ))
-    async def delete_server(self, server_id):
+    async def delete_server(self, server_id) -> None:
         await self.query(self.query_formats["delete_where"].format(
             schema=self.forever,
             table="discord_servers",
             column="server_id",
             value=server_id
         ))
-    async def create_joinable_role(self, role_id, server_id):
+    async def create_joinable_role(self, role_id, server_id) -> None:
         await self.query(self.query_formats["insert_into"].format(
             schema=self.forever,
             table="discord_joinable_roles",
             columns="role_id, server_id",
             values=f"{role_id}, {server_id}"
         ))
-    async def create_updated_message(self, server_id, message_type, channel_id, message_id):
+    async def create_updated_message(self, server_id : int, message_type : str, channel_id : int, message_id : int) -> None:
         await self.query(self.query_formats["insert_into"].format(
             schema=self.forever,
             table="discord_updated_messages",
             columns="server_id, message_type, channel_id, message_id",
             values=f"{server_id}, \"{message_type}\", {channel_id}, {message_id}"
         ))
-    async def create_role_message(self, role_id, message_id, channel_id, emoji, server_id):
+    async def create_role_message(self, role_id : int, message_id : int, channel_id : int, emoji, server_id : int) -> None:
         await self.query(self.query_formats["insert_into"].format(
             schema=self.forever,
             table="discord_role_messages",
             columns="role_id, message_id, channel_id, emoji, server_id",
             values=f"{role_id}, {message_id}, {channel_id}, \"{emoji}\", {server_id}"
         ))
-    async def create_notification(self, notification_name, role_id, server_id):
+    async def create_notification(self, notification_name : str, role_id : int, server_id : int) -> None:
         await self.query(self.query_formats["insert_into"].format(
             schema=self.forever,
             table="discord_notifications",
             columns="notification_name, role_id, server_id",
             values=f"\"{notification_name}\", {role_id}, {server_id}"
         ))
-    async def create_server(self, server_id):
+    async def create_server(self, server_id : int) -> None:
         await self.query(self.query_formats["insert_into"].format(
             schema=self.forever,
             table="discord_servers",
             columns="server_id",
             values=f"{server_id}"
         ))
-    async def create_dota_match(self, dota_match):
+    async def create_dota_match(self, dota_match : Dota_Match) -> None:
         query_match = self.query_formats["insert_into"]
         query_player = self.query_formats["insert_into"]
         query_match = query_match.format(
