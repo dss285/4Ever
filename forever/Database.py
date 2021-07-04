@@ -3,6 +3,7 @@ import psycopg2.extras
 import discord
 from models.BotMention import BotMention
 from models.UpdatedMessage import UpdatedMessage
+from forever.DropTable import DropTable
 from forever.Steam import Steam_API, Dota_Match, Dota_Match_Player
 from forever.Utilities import run_in_executor, log
 from forever.Warframe import CetusMessage, FissureMessage, SortieMessage, NightwaveMessage, InvasionMessage, SolSystem
@@ -98,6 +99,7 @@ class Database_Manager(Database):
         self.runtime["gfl"]["dolls"] = []
         self.runtime["gfl"]["equipment"] = []
         self.runtime["dota"] = {}
+        self.runtime["droptables"] = {}
         self.runtime["servers"] = {}
     async def get_server(self, server_id, data, client) -> None:
         log_id = next((i["logchannel_id"] for i in data["discord_servers"] if i["server_id"] == server_id), None)
@@ -252,6 +254,11 @@ class Database_Manager(Database):
             )
             Steam_API.cache.add(f"match_details_{dota_match.id}", dota_match)
         self.runtime["dota"]["heroes"] = dota_heroes
+    def droptables(self, data) -> None:
+        for i in data['droptables']:
+            if i['droptable_name'] not in self.runtime["droptables"]:
+                self.runtime["droptables"][i["droptable_name"]] = DropTable()
+            self.runtime["droptables"][i["droptable_name"]].add(i["weight"], i["item_name"])
     async def init_runtime(self,) -> None:
         self.structure()
         data = await self.get_data()

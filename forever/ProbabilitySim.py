@@ -1,9 +1,5 @@
-import math
-from re import T
 import time
-import threading
 import multiprocessing
-from typing import Optional
 import random
 """
     Probability Simulator, provides different kind of "pools" to get items from
@@ -11,10 +7,6 @@ import random
     AbstractPool - AbstractClass just to make sure all pools implement methods
     All pools return tuple.
     Has clone ability to make new of the same object for in use of Simulator Class
-
-
-
-
 """
 class AbstractPool():
     def __init__(self) -> None:
@@ -35,7 +27,7 @@ class ConstantPool(AbstractPool):
         self.rolls = rolls
     def has_items(self,) -> bool:
         return 0<self.rolls
-    def add(self, weight, item) -> None:
+    def add(self, weight : float, item : str) -> None:
         if weight not in self.items:
             self.items[weight] = []
         self.items[weight].append(item)
@@ -292,7 +284,6 @@ class ThreadedBulkSimulation():
             print(f"\nTotal: {total}")
             print(f"Success: {success}", f"Failures: {failures}")
             print(f"Rate: {(success/total)*100}%")
-    
 if __name__ == '__main__':
     limited = ConstantPool(3000000)
     limited.add(1/256, "Toxic")
