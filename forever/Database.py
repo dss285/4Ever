@@ -30,6 +30,7 @@ class Database:
                 'discord_updated_messages',
             },
             "shared" : {
+                "droptables",
                 "dota_heroes",
                 "dota_matches",
                 "dota_matches_players",
@@ -175,6 +176,8 @@ class Database_Manager(Database):
             self.gfl(data)
         if "warframe" in self.runtime:
             self.warframe(data)
+        if "droptables" in self.runtime:
+            self.droptables(data)
     def gfl(self, data) -> None:
         self.runtime["gfl"]["dolls"].clear()
         self.runtime["gfl"]["equipment"].clear()
