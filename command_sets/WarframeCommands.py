@@ -17,12 +17,13 @@ class WarframeCommands(Commands):
 
     def fetch_commands(self, command_key):
         command_list = {}
-        command_list["worldstate"] = WorldState(command_key, self.database)
+        command_list["worldstate"] = WorldState(command_key, self.database, self.client)
         command_list["relics"] = RelicSearch(command_key, self.droptables, self.client)
         return command_list
 class WorldState(Command):
     UPDATED_MESSAGE_REGEX = "(?P<{}>nightwave|sorties|poe|invasions|fissures)"
-    def __init__(self, command_key, database):
+    def __init__(self, command_key, database, client):
+        self.client = client
         self.database = database
         super().__init__(command_key, "worldstate", """Creates an message where X thing is updated from Warframe Worldstate""", f"{command_key} worldstate *<nightwave|sorties|poe|invasions|fissures>*", ["worldstate"])
         self.args = Args(message=WorldState.UPDATED_MESSAGE_REGEX)
@@ -42,7 +43,7 @@ class WorldState(Command):
                 elif parse.get("message") == "fissures":
                     new_message = FissureMessage(msg, [])
                 elif parse.get("message") == "poe":
-                    new_message = CetusMessage(msg, [])
+                    new_message = CetusMessage(msg, [], self.client)
                 elif parse.get("message") == "invasions":
                     new_message = InvasionMessage(msg, [])
                 if new_message:
