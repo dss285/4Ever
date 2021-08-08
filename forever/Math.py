@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import math
-def equationGraph(formula, x_range, tick_n):
+def equationGraph(formula : str, x_range : int, tick_n):
 	x = np.array(x_range)
 	y = eval(formula)
 	plt.plot(x, y)
@@ -37,13 +37,13 @@ def commonOnotations():
 	plt.grid(True)
 	plt.legend()
 	plt.savefig('onotation.png')
-def probability(trials, drops, chance):
-	coeff = coefficient(int(trials),int(drops))
-	pow_probability = chance**int(drops)
-	pow_probability_2 = (1-float(chance))**(int(trials)-int(drops))
+def probability(trials : int, successes : int, chance : float) -> float:
+	coeff = coefficient(trials, successes)
+	pow_probability = chance**successes
+	pow_probability_2 = (1-chance)**(trials-successes)
 	probability_out = coeff*pow_probability*pow_probability_2
 	return probability_out
-def coefficient(trials, successes):
+def coefficient(trials : int, successes : int) -> float:
 	if(successes > trials - successes):
 		successes = trials-successes
 	res = 1
@@ -51,7 +51,7 @@ def coefficient(trials, successes):
 		res = res * (trials - i) 
 		res = res / (i + 1) 
 	return res
-def pythagoras(a=None, b=None, c=None):
+def pythagoras(a=None, b=None, c=None) -> float:
 	#c = a + b
 	#b = c - a
 	#a = c - b

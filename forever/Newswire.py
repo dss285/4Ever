@@ -12,7 +12,7 @@ class Newswire:
 	def __init__(self,):
 		self.time = 0
 		self.nw_items = {}
-	async def getData(self, limit=5):
+	async def get_data(self, limit : int=5) -> dict:
 		xx = time.time()
 		if xx-self.time > 3600:
 			async with aiohttp.ClientSession() as sess:
@@ -42,28 +42,28 @@ class Newswire:
 							self.time = time.time()
 		else:
 			return self.nw_items
-	async def getEmbeds(self, limit=5):
-		await self.getData(limit)
+	async def get_embeds(self, limit : int=5) -> list[discord.Embed]:
+		await self.get_data(limit)
 		embeds = []
 		for i in self.nw_items.values():
 			embeds.append(i.toEmbed())
 		return embeds
 class NewswireItem:
-	def __init__(self, id, title, url, image):
+	def __init__(self, id : int, title : str, url : str, image : str) -> None:
 		self.id = id
 		self.title = title
 		self.url = url
 		self.image = image
-	def toEmbed(self,):
+	def to_embed(self,) -> discord.Embed:
 		em = EmbedTemplate(
 			title=self.title, 
 			description=self.url)
 		em.set_image(url=self.image)
 		return em
 class NewswireMessage(UpdatedMessage):
-    def __init__(self, message):
+    def __init__(self, message : discord.Message) -> None:
         super().__init__(message, "gtanw")
-    async def refresh(self, newswire_data):
+    async def refresh(self, newswire_data : list[NewswireItem]) -> None:
         em = EmbedTemplate(title="GTA V Newswire", timestamp=datetime.utcnow(), inline=False)
         x = 1
         for i in newswire_data:

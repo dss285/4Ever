@@ -12,7 +12,7 @@ from forever.Newswire import NewswireMessage
 from models.Server import Server
 from forever.GFL import Doll, Fairy
 class Database:
-    def __init__(self, host, user, password, database, client) -> None:
+    def __init__(self, host : str, user : str, password : str, database : str, client : discord.Client) -> None:
         self.host = host
         self.user = user
         self.password = password
@@ -58,18 +58,18 @@ class Database:
                                   database=self.database,
                                   port=5432)
     @run_in_executor
-    def query(self, sql) -> None:
+    def query(self, sql : str) -> None:
         with self.connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
             cursor.execute(sql)
         self.connection.commit()
     @run_in_executor
-    def get_data(self,) -> dict:
+    def get_data(self,) -> dict[str, dict]:
         results = {}
         for i, j in self.tables.items():
             for x in j:
                 results[x] = self.get_table_rows(f'\"{i}\".{x}')
         return results
-    def get_table_rows(self, tabletype) -> dict:
+    def get_table_rows(self, tabletype : str) -> dict:
         results = None
         with self.connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
             cursor.execute(f"SELECT * FROM {tabletype}")
@@ -102,17 +102,17 @@ class Database_Manager(Database):
         self.runtime["dota"] = {}
         self.runtime["droptables"] = {}
         self.runtime["servers"] = {}
-    async def get_server(self, server_id, data, client) -> None:
+    async def get_server(self, server_id, data : dict[str, dict]) -> None:
         log_id = next((i["logchannel_id"] for i in data["discord_servers"] if i["server_id"] == server_id), None)
-        discord_server = client.get_guild(server_id)
-        logchannel = client.get_channel(log_id) if log_id else None
+        discord_server = self.client.get_guild(server_id)
+        logchannel = self.client.get_channel(log_id) if log_id else None
         updated_messages = {}
         joinable_roles = set()
         role_messages = {}
         notifications = []
         for x in data["discord_role_messages"]:
             if x["server_id"] == server_id:
-                channel = client.get_channel(x["channel_id"])
+                channel = self.client.get_channel(x["channel_id"])
                 message = None
                 try:
                     message = await channel.fetch_message(x["message_id"])
@@ -143,7 +143,7 @@ class Database_Manager(Database):
                     await self.delete_notification(x["notification_name"], x["server_id"])
         for x in data["discord_updated_messages"]:
             if x["server_id"] == server_id:
-                channel = client.get_channel(x["channel_id"])
+                channel = self.client.get_channel(x["channel_id"])
                 if channel:
                     message = None
                     try:
@@ -164,12 +164,12 @@ class Database_Manager(Database):
                             updated_messages[message_type] = SortieMessage(message)
                         elif message_type == "poe":
                             mention = next((i for i in notifications if i.name == "poe_night"), None)
-                            updated_messages[message_type] = CetusMessage(message, mention, client)
+                            updated_messages[message_type] = CetusMessage(message, mention, self.client)
                         elif message_type == "gtanw":
                             updated_messages[message_type] = NewswireMessage(message)
         server = Server(server_id, discord_server, logchannel, updated_messages, notifications, joinable_roles, role_messages)
         self.runtime["servers"][server_id] = server
-    async def update_runtime(self, client) -> None:
+    async def update_runtime(self,) -> None:
         data = self.get_data()
 
         if "gfl" in self.runtime:
@@ -178,7 +178,7 @@ class Database_Manager(Database):
             self.warframe(data)
         if "droptables" in self.runtime:
             self.droptables(data)
-    def gfl(self, data) -> None:
+    def gfl(self, data : dict[str, dict]) -> None:
         self.runtime["gfl"]["dolls"].clear()
         self.runtime["gfl"]["equipment"].clear()
         for d in data["gfl_dolls"]:
@@ -191,7 +191,7 @@ class Database_Manager(Database):
             d["aliases"].split("|") if d["aliases"] else [],
             d["production_timer"])
             self.runtime["gfl"]["dolls"].append(doll)
-    def warframe(self, data) -> None:
+    def warframe(self, data : dict[str, dict]) -> None:
         self.runtime["warframe"]["translate"]["solsystem"]["planets"].clear()
         self.runtime["warframe"]["translate"]["solsystem"]["nodes"].clear()
         for item in data["wf_missions"]:
@@ -207,7 +207,7 @@ class Database_Manager(Database):
         for item in data["wf_solsystem_nodes"]:
             self.runtime["warframe"]["translate"]["solsystem"]["nodes"].append(SolSystem.SolNode(item["node_id"], item["name"],
             next(planet for planet in self.runtime["warframe"]["translate"]["solsystem"]["planets"] if planet.id == item["planet_id"])))
-    def dota(self, data) -> None:
+    def dota(self, data : dict[str, dict]) -> None:
         match_players = {}
         dota_heroes = {"id" : {}, "name" : {}}
         for i in data["dota_heroes"]:
@@ -257,17 +257,18 @@ class Database_Manager(Database):
             )
             Steam_API.cache.add(f"match_details_{dota_match.id}", dota_match)
         self.runtime["dota"]["heroes"] = dota_heroes
-    def droptables(self, data) -> None:
-        for i in data['droptables']:
-            if i['droptable_name'] not in self.runtime["droptables"]:
-                self.runtime["droptables"][i["droptable_name"]] = DropTable()
-            self.runtime["droptables"][i["droptable_name"]].add(i["weight"], i["item_name"])
+    def droptables(self, data : dict[str, dict]) -> None:
+        return
+        # for i in data['droptables']:
+        #     if i['droptable_name'] not in self.runtime["droptables"]:
+        #         self.runtime["droptables"][i["droptable_name"]] = DropTable()
+        #     self.runtime["droptables"][i["droptable_name"]].add(i["weight"], i["item_name"])
     async def init_runtime(self,) -> None:
         self.structure()
         data = await self.get_data()
         #Server Translation
         for i in data["discord_servers"]:
-            await self.get_server(i["server_id"], data, self.client)
+            await self.get_server(i["server_id"], data)
         #GFL Translation
         self.gfl(data)
         #WF Translation
@@ -317,7 +318,7 @@ class Database_Manager(Database):
             )
         if query:
             await self.query(query)
-    async def delete_notification(self, notification_name, server_id : int) -> None:
+    async def delete_notification(self, notification_name : str, server_id : int) -> None:
         await self.query(self.query_formats["delete_where_and"].format(
             schema=self.forever,
             table="discord_notifications",
@@ -326,14 +327,14 @@ class Database_Manager(Database):
             column_2="server_id",
             value_2=server_id
         ))
-    async def delete_server(self, server_id) -> None:
+    async def delete_server(self, server_id : int) -> None:
         await self.query(self.query_formats["delete_where"].format(
             schema=self.forever,
             table="discord_servers",
             column="server_id",
             value=server_id
         ))
-    async def create_joinable_role(self, role_id, server_id) -> None:
+    async def create_joinable_role(self, role_id : int, server_id : int) -> None:
         await self.query(self.query_formats["insert_into"].format(
             schema=self.forever,
             table="discord_joinable_roles",

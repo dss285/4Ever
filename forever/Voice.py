@@ -46,7 +46,7 @@ class VoicePlayer:
 		self.channel = channel
 		self.client = client
 	def update_sounds(self,):
-		sounds = glob.glob('/sounds/*')
+		sounds = glob.glob('../sounds/*')
 		for i in sounds:
 			self.sounds[os.path.splitext(os.path.basename(i))[0]] = i
 	async def playFile(self, fileName):

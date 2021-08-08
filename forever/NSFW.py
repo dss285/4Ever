@@ -1,12 +1,15 @@
 import random
 import asyncio
 import json
+from typing import Any
 import xml.etree.ElementTree as ET
+
+import discord
 
 from models.EmbedTemplate import EmbedTemplate
 from forever.Utilities import fetchURL, Cache
 cache = Cache()
-async def booruAPI(keywords, url, api):
+async def booruAPI(keywords, url, api) -> discord.Embed:
     key = f"{api}_{keywords}"
     if key not in cache:
         params = add_params(keywords, False)
@@ -21,15 +24,15 @@ async def booruAPI(keywords, url, api):
         return construct_embed(post['img'], post['tags'], keywords)
     except IndexError:
         return EmbedTemplate(title='No results!', description='No results for keywords found')
-async def rule34XXX(keywords):
+async def rule34XXX(keywords) -> discord.Embed:
     return await booruAPI(keywords, 'https://rule34.xxx/index.php', 'rule34')
-async def realbooru(keywords):
+async def realbooru(keywords) -> discord.Embed:
     return await booruAPI(keywords, 'https://realbooru.com/index.php', 'realbooru')
-async def safebooru(keywords):
+async def safebooru(keywords) -> discord.Embed:
     return await booruAPI(keywords, 'https://safebooru.org/index.php', 'safebooru')
-async def gelbooru(keywords):
+async def gelbooru(keywords) -> discord.Embed:
     return await booruAPI(keywords, 'https://gelbooru.com/index.php', 'gelbooru')
-async def danbooru(keywords):
+async def danbooru(keywords) -> discord.Embed:
     key = f"danbooru_{keywords}"
     if key not in cache:
         params = add_params(keywords, True)
@@ -44,7 +47,7 @@ async def danbooru(keywords):
         return construct_embed(post['img'], post['tags'], keywords)
     except IndexError:
         return EmbedTemplate(title='No results!', description='No results for keywords found')
-def add_params(keywords, danbooru=False):
+def add_params(keywords, danbooru=False) -> dict[str, Any]:
     if ' ' in keywords:
         keywords = keywords.split(" ")
         keywords.append("-furry")
@@ -57,7 +60,7 @@ def add_params(keywords, danbooru=False):
         params['q'] = 'index',
         params['page'] = 'dapi'
     return params
-def construct_embed(image_url, tags, title):
+def construct_embed(image_url, tags, title) -> discord.Embed:
     em = EmbedTemplate(title=title, description=tags.replace("*", ""))
     em.set_image(url=image_url)
     return em

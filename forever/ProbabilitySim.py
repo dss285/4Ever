@@ -111,10 +111,11 @@ class BoolWeightedPool(AbstractPool):
         self.random = random.Random(time.time())
     def has_items(self,) -> bool:
         return True if self.items else False
-
+    def pool_count(self,):
+        return len(self.items)
     def add(self, weight, amount) -> None:
         self._weights.add(weight)
-        for i in range(amount):
+        for i in range(0, amount):
             self.items.append(weight)
     def weights(self,) -> dict:
         return sorted(list(self._weights), reverse=True)
@@ -132,6 +133,10 @@ class BoolWeightedPool(AbstractPool):
                 self.add(weight, 1)
             return (weight, success)
         return (None, None)
+    def reset(self,):
+        self.items = []
+        self._items = []
+        self._weights = set()
     def clone(self,) -> AbstractPool:
         if self._items is None:
             self._items = list(self.items)
@@ -139,7 +144,7 @@ class BoolWeightedPool(AbstractPool):
         tmp._weights = set(self._weights)
         tmp.items = list(self._items)
         return tmp
-class Simulation():
+class _Simulation():
     """
     Uses different pools to get successes, failures etc
     """
@@ -178,7 +183,7 @@ class Simulation():
                 combined_failures += data["failures"]
                 combined_total += data["total"]
         return (combined_success, combined_failures, combined_total, compilation)
-class BulkSimulation(Simulation):
+class _BulkSimulation(_Simulation):
     """
     Same as Simulation, but this runs it in loops
     """
@@ -214,7 +219,6 @@ class BulkSimulation(Simulation):
         if is_constant_pool:
             if data:
                 data.extend(items)
-            print(len(items))
             return items
         for weight, iter_data in combined_data.items():
             if data:
@@ -226,12 +230,11 @@ class BulkSimulation(Simulation):
             data[0] += combined_success
             data[1] += combined_failures
             data[2] += combined_total
-            print(data[0])
         print(f"\nTotal: {combined_total}")
         print(f"Success: {combined_success}", f"Failures: {combined_failures}")
         print(f"Rate: {(combined_success/combined_total)*100}%")
         return (combined_success, combined_failures, combined_total, combined_data)
-class ThreadedBulkSimulation():
+class _ThreadedBulkSimulation():
     """
         Same as BulkSimulation, but uses multiprocessing to reeally pump up some speed into it, much faster on higher counts
         Probably wont use it in any bot command, as its super heavy too
@@ -297,7 +300,7 @@ if __name__ == '__main__':
     # end = time.time()-start
     # print(f"ThreadedBulk: {end}s")
 
-    sim2 = BulkSimulation(limited)
+    sim2 = _BulkSimulation(limited)
     start = time.time()
     sim2.run(2)
     end = time.time()-start

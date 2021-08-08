@@ -38,8 +38,8 @@ class Probability(Command):
                 await message.channel.send(embed=EmbedTemplate(title="Probability", description="Wanted amount of successes"))
                 successes = await self.client.wait_for('message', timeout=30.0, check=is_number)
                 if trials and chance and successes:
-                    successes = float(successes.content)
-                    trials = float(trials.content)
+                    successes = int(successes.content)
+                    trials = int(trials.content)
                     chance = float(chance.content)/100
                     em = EmbedTemplate(title='Probability', description="Calculated probability")
                     em.add_field(name="Trials", value=f"{trials}")

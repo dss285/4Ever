@@ -6,18 +6,18 @@ class CrissCross:
 # x x x
 # x x x
 # x x x
-    def __init__(self, player1, player2, client, size=3):
+    def __init__(self, player1, player2, client, size=3) -> None:
         self.map = self.Map(size)
         self.player1 = (player1, 'x')
         self.player2 = (player2, '0')
         self.client = client
         self.turn = 1
-    async def StartGame(self, channel):
-        async def getResponse(player, next_turn):
+    async def StartGame(self, channel) -> None:
+        async def getResponse(player, next_turn) -> discord.Message:
             response = await self.client.wait_for('message', timeout=30.0, check=lambda x: x.author == player[0] and channel == x.channel)
             self.turn = next_turn
             return response
-        def runResponse(player, response):
+        def runResponse(player, response) -> bool:
             reg = re.match(r"(\w{1})(\d{1,2})", response.content)
             if reg:
                 row = reg.group(1).lower()
@@ -62,14 +62,13 @@ class CrissCross:
             await channel.send(f"> {self.player1[0].mention} won")
         elif self.turn==1:
             await channel.send(f"> {self.player2[0].mention} won")
-    def getEmbed(self,):
+    def getEmbed(self,) -> discord.Embed:
         em = EmbedTemplate(title="Crisscross", description=f"{self.player1[0].mention} :x: vs {self.player2[0].mention} :o:")
         em.add_field(name="Game", value=str(self.map).replace("x", ":x:").replace("0", ":o:").replace("-", ":large_blue_diamond:"))
         return em
     class Map:
-        def __init__(self, size = 3):
+        def __init__(self, size = 3) -> None:
             self.map = {}
-            
             for i in 'abcdefghijklmnopqrstuvwxyz':
                 if len(self.map) < size:
                     tmp = []
@@ -78,12 +77,12 @@ class CrissCross:
                     self.map[i] = tmp
                 else:
                     break
-        def mapFilled(self,):
+        def mapFilled(self,) -> bool:
             for i in self.map:
                 if "-" in self.map[i]:
                     return False
             return True
-        def gameOver(self,):
+        def gameOver(self,) -> bool:
             # X - X - X
             for i in self.map:
                 val = None
@@ -159,7 +158,7 @@ class CrissCross:
             if not loopbroke:
                 return True
             return False
-        def setValue(self, row, column, value):
+        def setValue(self, row, column, value) -> bool:
             column -= 1
             if column >= len(self.map.keys()):
                 column = len(self.map.keys())-1
@@ -170,7 +169,7 @@ class CrissCross:
                 return True
             else:
                 return False
-        def __str__(self,):
+        def __str__(self,) -> str:
             convert = ""
             for i in self.map:
                 convert += " ".join(self.map[i])+"\n"

@@ -9,17 +9,17 @@ from forever.Utilities import Cache
 
 class Steam_Account():
     steam_img_url = "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars"
-    def __init__(self, id, name, profile_url, avatar_hash, time_created):
+    def __init__(self, id : int, name : str, profile_url : str, avatar_hash : str, time_created : int) -> None:
         self.id = id
         self.name = name
         self.profile_url = profile_url
         self.avatar_hash = avatar_hash
         self.time_created = time_created
-    def get_full_avatar(self,):
+    def get_full_avatar(self,) -> str:
         return f"{Steam_Account.steam_img_url}/{self.avatar_hash[:2]}/{self.avatar_hash}_full.jpg"
-    def get_medium_avatar(self,):
+    def get_medium_avatar(self,) -> str:
         return f"{Steam_Account.steam_img_url}/{self.avatar_hash[:2]}/{self.avatar_hash}_medium.jpg"
-    def get_avatar(self,):
+    def get_avatar(self,) -> str:
         return f"{Steam_Account.steam_img_url}/{self.avatar_hash[:2]}/{self.avatar_hash}.jpg"
 class Dota_Bare_Match():
     def __init__(self, id, players, lobby_type, timestamp):
@@ -94,9 +94,9 @@ class Steam_API():
         self.lock = asyncio.Lock()
         self.api_url = api_url
         self.api_key = api_key
-    def steam_32bit_id_to_64bit(self, steam_32id):
+    def steam_32bit_id_to_64bit(self, steam_32id : int) -> int:
         return int(steam_32id) + 76561197960265728
-    def steam_64bit_id_to_32bit(self, steam_64id):
+    def steam_64bit_id_to_32bit(self, steam_64id : int) -> int:
         return int(steam_64id) - 76561197960265728
     async def request(self, endpoint, params):
         async with self.lock:
