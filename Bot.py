@@ -8,7 +8,7 @@ import config
 from models.EmbedTemplate import EmbedTemplate
 
 from forever.Utilities import log
-from forever.Database import Database_Manager
+from forever.Database import DB_API
 from models.Server import Server
 from forever.Newswire import Newswire
 from forever.Warframe import Worldstate
@@ -28,7 +28,7 @@ from command_sets.SteamCommands import SteamCommands
 class Bot(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.database = Database_Manager(config.host, config.user, config.password, config.database, self)
+        self.database = DB_API(config.host, config.user, config.password, config.database, self)
         self.worldstate = Worldstate()
         self.steam_api = Steam_API("http://api.steampowered.com", config.steam_api_key)
         self.newswire = Newswire()
@@ -53,9 +53,9 @@ class Bot(discord.Client):
         self.server_sync_task = self.loop.create_task(self.server_sync())
         while True:
             try:
-                await self.worldstate.getData(self.database.runtime)
+                await self.worldstate.get_data(self.database.runtime)
 
-                await self.newswire.getData()
+                await self.newswire.get_data()
 
                 gtadata = {"gtanw" : self.newswire.nw_items.values()}
                 data = {**gtadata, **self.worldstate.runtime}
@@ -115,8 +115,7 @@ class Bot(discord.Client):
                     em.add_field(name=f"{name.title()}", value=commandset.command_key+" help")
                 await message.channel.send(embed=em)
         except Exception as e:
-            print("Error, logged")
-            log([f"[COMMANDS][{time.time()}] {e}", traceback.format_exc()+"\r\n"])
+            log([f"[COMMANDS][{datetime.now().strftime('%Y-%m-%d, %H:%I:%S.%f')}] {e}", traceback.format_exc()+"\r\n"])
     async def on_voice_state_update(self, member, before, after):
         server = self.database.runtime["servers"].get(member.guild.id)
         if server and server.voice and len(server.voice.vc.channel.members) == 1:

@@ -107,7 +107,8 @@ def log(messages, file="log.txt"):
         messages = [messages]
     fo = open("log.txt", "a+")
     for i in messages:
-        fo.write(str(i)+"\n")
+        print(i, "\n")
+        fo.write(f"{i}\n")
     fo.close()
 def run_in_executor(function):
     async def __decorator(*args, **kwargs):

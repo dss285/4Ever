@@ -3,21 +3,20 @@ import psycopg2.extras
 import discord
 from models.BotMention import BotMention
 from models.UpdatedMessage import UpdatedMessage
-from forever.DropTable import DropTable
 from forever.Steam import Steam_API, Dota_Match, Dota_Match_Player
 from forever.Utilities import run_in_executor, log
 from forever.Warframe import CetusMessage, FissureMessage, SortieMessage, NightwaveMessage, InvasionMessage, SolSystem
 from forever.Newswire import NewswireMessage
 
 from models.Server import Server
+from forever.Arknights import Formula, Item, Stage
 from forever.GFL import Doll, Fairy
 class Database:
-    def __init__(self, host : str, user : str, password : str, database : str, client : discord.Client) -> None:
+    def __init__(self, host : str, user : str, password : str, database : str, client : discord.Client=None) -> None:
         self.host = host
         self.user = user
         self.password = password
         self.database = database
-        self.client = client
         self.shared = "shared"
         self.forever = "forever"
         self.tables = {
@@ -30,7 +29,9 @@ class Database:
                 'discord_updated_messages',
             },
             "shared" : {
-                "droptables",
+                "arknights_items",
+                "arknights_stages",
+                "arknights_formulas",
                 "dota_heroes",
                 "dota_matches",
                 "dota_matches_players",
@@ -57,12 +58,20 @@ class Database:
                                   password=self.password,
                                   database=self.database,
                                   port=5432)
-    @run_in_executor
+    
     def query(self, sql : str) -> None:
-        with self.connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
-            cursor.execute(sql)
-        self.connection.commit()
-    @run_in_executor
+        try:
+            data = None
+            with self.connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
+                cursor.execute(sql)
+                if "SELECT" in sql:
+                    data = cursor.fetchall()
+            self.connection.commit()
+            if data:
+                return data
+        except Exception as e:
+            print(e)
+            self.connection.rollback()
     def get_data(self,) -> dict[str, dict]:
         results = {}
         for i, j in self.tables.items():
@@ -76,9 +85,10 @@ class Database:
             results = cursor.fetchall()
         self.connection.commit()
         return results
-class Database_Manager(Database):
+class DB_API(Database):
     def __init__(self, host :str, user:str, password:str, database:str, client) -> None:
-        super().__init__(host, user, password, database, client)
+        super().__init__(host, user, password, database)
+        self.client = client
         self.runtime = {}
         self.saved_messages = set()
         self.mentions = []
@@ -96,12 +106,24 @@ class Database_Manager(Database):
         self.runtime["warframe"]["translate"]["solsystem"] = {}
         self.runtime["warframe"]["translate"]["solsystem"]["planets"] = []
         self.runtime["warframe"]["translate"]["solsystem"]["nodes"] = []
+        self.runtime["arknights"] = {}
+        self.runtime["arknights"]["formulas"] = {}
+        self.runtime["arknights"]["items"] = {}
+        self.runtime["arknights"]["stages"] = {}
         self.runtime["gfl"] = {}
-        self.runtime["gfl"]["dolls"] = []
-        self.runtime["gfl"]["equipment"] = []
+        self.runtime["gfl"]["dolls"] = {}
+        self.runtime["gfl"]["dolls"]["aliases"] = {}
+        self.runtime["gfl"]["dolls"]["names"] = {}
+        self.runtime["gfl"]["equipment"] = {}
         self.runtime["dota"] = {}
         self.runtime["droptables"] = {}
         self.runtime["servers"] = {}
+    @run_in_executor
+    def query(self, sql : str) -> None:
+        return super().query(sql)
+    @run_in_executor
+    def get_data(self,) -> dict[str, dict]:
+        return super().get_data()
     async def get_server(self, server_id, data : dict[str, dict]) -> None:
         log_id = next((i["logchannel_id"] for i in data["discord_servers"] if i["server_id"] == server_id), None)
         discord_server = self.client.get_guild(server_id)
@@ -178,19 +200,77 @@ class Database_Manager(Database):
             self.warframe(data)
         if "droptables" in self.runtime:
             self.droptables(data)
+    def arknights(self, data : dict[str, dict]) -> None:
+        formulas = data.get("arknights_formulas")
+        stages = data.get("arknights_stages")
+        items = data.get("arknights_items")
+        for i in items:
+            tmp = Item(i["id"], i["name"], i["description"], i["rarity"], i["icon_id"], i["usage"])
+            tmp._stage_drop_list_str = i["stage_drop_list"]
+            self.runtime["arknights"]["items"][i["id"]] = tmp
+        for f in formulas:
+            costs = []
+            if f["costs"] != "":
+                tmp = f["costs"].split(" ")
+                for c in tmp:
+                    splitted = c.split("|")
+                    item_id = splitted[0]
+                    amount = splitted[1]
+                    costs.append({
+                        "item" : self.runtime["arknights"]["items"][item_id],
+                        "amount" : amount
+                    })
+            tmp = Formula(f["id"], self.runtime["arknights"]["items"][f["item_id"]], f["count"], costs, f["room"])
+            self.runtime["arknights"]["items"][f["item_id"]].set_formula(tmp)
+            self.runtime["arknights"]["formulas"][f"{f['id']}_{f['room']}"] = tmp
+        for s in stages:
+            drops = []
+            if s["drops"] != "":
+                tmp = s["drops"].split(" ")
+                for x in tmp:
+                    splitted = x.split("|")
+                    itemid = splitted[0]
+                    droptype = splitted[1]
+                    occurence = splitted[2]
+                    item = self.runtime["arknights"]["items"].get(itemid)
+                    if item is None:
+                        item = itemid
+                    drops.append({
+                        "item" : item,
+                        "drop_type" : droptype,
+                        "occurence" : occurence
+                    })
+            sta = Stage(s["id"], s["code"], s["name"], s["description"], s["sanity_cost"], drops)
+            self.runtime["arknights"]["stages"][s["id"]] = sta
+        for itemid, item in self.runtime["arknights"]["items"].items():
+            stage_drop_list = []
+            if item._stage_drop_list_str not in ["", "-"]:
+                tmp = item._stage_drop_list_str.split(" ")
+                for i in tmp:
+                    splitted = i.split("|")
+                    stageid = splitted[0]
+                    occurence = splitted[1]
+                    stage = self.runtime["arknights"]["stages"][stageid]
+                    stage_drop_list.append({
+                        "stage" : stage,
+                        "occurence" : occurence
+                    })
+                item.set_stage_drop_list(stage_drop_list)
+    
     def gfl(self, data : dict[str, dict]) -> None:
-        self.runtime["gfl"]["dolls"].clear()
-        self.runtime["gfl"]["equipment"].clear()
         for d in data["gfl_dolls"]:
+            aliases = d["aliases"].split("|") if d["aliases"] else []
             doll = Doll(d["id"], d["name"], 
             d["type"], 
             d["rarity"], 
             d["formation_bonus"], 
             d["formation_tiles"],
             d["skill"],
-            d["aliases"].split("|") if d["aliases"] else [],
+            aliases,
             d["production_timer"])
-            self.runtime["gfl"]["dolls"].append(doll)
+            self.runtime["gfl"]["dolls"]["names"][d["name"].lower()] = doll
+            for x in aliases:
+                self.runtime["gfl"]["dolls"]["aliases"][x.lower()] = doll
     def warframe(self, data : dict[str, dict]) -> None:
         self.runtime["warframe"]["translate"]["solsystem"]["planets"].clear()
         self.runtime["warframe"]["translate"]["solsystem"]["nodes"].clear()
@@ -275,7 +355,8 @@ class Database_Manager(Database):
         self.warframe(data)
         #dota matches
         self.dota(data)
-
+        #AK Translation
+        self.arknights(data)
         self.init_done = True
     def delete_joinable_role(self, role_id : int) -> None:
         self.query(self.query_formats["delete_where"].format(

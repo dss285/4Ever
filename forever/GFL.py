@@ -61,18 +61,23 @@ class ProtocolAssimilationBanner():
     PRIORITIZE_WEIGHT = "PRIORITY_WEIGHT"
     MONTHLY_SVAROGS = 6
     class BannerItem():
-        def __init__(self, name, amount) -> None:
+        def __init__(self, name : int, amount : int) -> None:
             self.name = name
             self._original_amount = amount
             self._amount = amount
         def original_amount(self,) -> int:
+            """
+            Returns original amount
+            """
             return self._original_amount
         def reduce_by_one(self,) -> None:
             self._amount -= 1
         def reset(self,) -> None:
             self._amount = self._original_amount
         def amount(self,) -> int:
+            self.original_amount()
             return self._amount
+
     def __init__(self, svarog_tickets_from_previous : int=0) -> None:
         self.pool = BoolWeightedPool()
         self.svarog_tickets = svarog_tickets_from_previous

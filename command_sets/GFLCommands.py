@@ -7,7 +7,7 @@ import datetime
 from models.EmbedTemplate import EmbedTemplate
 from models.Commands import Commands, Command
 from models.Server import Server
-from forever.Database import Database_Manager
+from forever.Database import DB_API
 from forever.GFL import Doll, ProtocolAssimilationBanner, Banners
 from forever.Utilities import Args
 #fairylle komennot, dolleille jonkinlainen haku
@@ -34,7 +34,7 @@ class ProductionDolls(Command):
     async def run(self, message : discord.Message, server : Server):
         parsed = self.args.parse(message.content)
         if parsed:
-            tmp = self.database.runtime["gfl"]["dolls"]
+            tmp = list(self.database.runtime["gfl"]["dolls"]["names"].values())
             tmp = [x for x in tmp if x.production_timer]
             tmp_str = []
             for doll in sorted(tmp, key=lambda x: x.production_timer):
@@ -45,15 +45,20 @@ class ProductionDolls(Command):
                 em.add_field(name="PRODUCTION", value="\n".join(i), inline=True)
             await message.channel.send(embed=em)
 class DollInfo(Command):
-    def __init__(self, command_key : str, client : discord.Client, database : Database_Manager):
+    def __init__(self, command_key : str, client : discord.Client, database : DB_API):
         self.client = client
         self.database = database
         super().__init__(command_key, "doll", """Info of dolls""", f"{command_key} doll", ["d", "tdoll"])
         self.args = Args(doll=Args.ANY_ARG)
         self.args.set_pattern(command_key, self.aliases)
-    def find_doll(self, parse) -> Doll:
-        return next((x for x in self.database.runtime["gfl"]["dolls"] if parse['doll'].lower() == x.name.lower() or parse['doll'].lower() in x.aliases), None)
-    async def run(self, message, server : Server) -> None:
+    def find_doll(self, parse : str) -> Doll:
+        if parse['doll'].lower() in self.database.runtime["gfl"]["dolls"]["names"]:
+            return self.database.runtime["gfl"]["dolls"]["names"].get(parse['doll'].lower())
+        elif parse['doll'].lower() in self.database.runtime["gfl"]["dolls"]["aliases"]:
+            return self.database.runtime["gfl"]["dolls"]["aliases"].get(parse['doll'].lower())
+        else:
+            return None
+    async def run(self, message : discord.Message, server : Server) -> None:
         parse = self.args.parse(message.content)
         if parse:
             doll = self.find_doll(parse)
@@ -62,6 +67,9 @@ class DollInfo(Command):
                 image = discord.File(doll.get_image_path(), filename="doll.png")
                 em.set_image(url="attachment://doll.png")
                 await message.channel.send(file=image, embed=em)
+            else:
+                em = EmbedTemplate(title="Not found", description="Doll wasn't found in the database, if you think this is an error, contact bot owner.")
+                await message.channel.send(embed=em)
 class SFCapture(Command):
     def __init__(self, command_key,):
         super().__init__(command_key, "sfsim", """SF Capture sim""", f"{command_key} sfsim", ["sfcap"])

@@ -141,4 +141,5 @@ log.txt
 sounds/*
 videos/*
 warframe/droptables.json
+_db.py
 forever/imgs_test

@@ -356,7 +356,7 @@ class Worldstate():
         expiry_time = next(((int(x["Expiry"]["$date"]["$numberLong"])//1000) for x in parsing["SyndicateMissions"] if x["Tag"] == "CetusSyndicate"), None)
         if expiry_time:
             self.runtime["poe"] = CetusStatus(expiry_time)
-    async def getData(self, data_runtime):
+    async def get_data(self, data_runtime):
         self.initRuntime()
         async with aiohttp.ClientSession() as sess:
             async with sess.get("http://content.warframe.com/dynamic/worldState.php") as r:
