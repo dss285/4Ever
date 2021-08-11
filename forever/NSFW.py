@@ -7,13 +7,13 @@ import xml.etree.ElementTree as ET
 import discord
 
 from models.EmbedTemplate import EmbedTemplate
-from forever.Utilities import fetchURL, Cache
+from forever.Utilities import fetch_url, Cache
 cache = Cache()
 async def booruAPI(keywords, url, api) -> discord.Embed:
     key = f"{api}_{keywords}"
     if key not in cache:
         params = add_params(keywords, False)
-        response = await fetchURL(url, params)
+        response = await fetch_url(url, params)
         if response:
             posts = ET.fromstring(response)
             posts = [{"img" : el.attrib.get('file_url'), "tags" : el.attrib.get('tags')[:120]+"..."} for el in posts.findall('.//post')]
@@ -36,7 +36,7 @@ async def danbooru(keywords) -> discord.Embed:
     key = f"danbooru_{keywords}"
     if key not in cache:
         params = add_params(keywords, True)
-        response = await fetchURL('https://danbooru.donmai.us/posts.json', params)
+        response = await fetch_url('https://danbooru.donmai.us/posts.json', params)
         if response:
             posts = json.loads(response)
             if key not in cache:

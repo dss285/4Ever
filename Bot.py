@@ -1,3 +1,4 @@
+import aiohttp
 import discord
 import asyncio
 from datetime import datetime
@@ -5,14 +6,16 @@ import time
 import traceback
 import config
 
+import forever.Utilities
 from models.EmbedTemplate import EmbedTemplate
 
 from forever.Utilities import log
 from forever.Database import DB_API
-from models.Server import Server
 from forever.Newswire import Newswire
-from forever.Warframe import Worldstate
+from forever.Warframe import DropTables, Worldstate
 from forever.Steam import Steam_API
+from forever.Arknights import  PenguinStats
+from models.Server import Server
 
 from command_sets.VoiceCommands import VoiceCommands
 from command_sets.ModerationCommands import ModerationCommands
@@ -28,8 +31,11 @@ from command_sets.SteamCommands import SteamCommands
 class Bot(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.aiosession = None
         self.database = DB_API(config.host, config.user, config.password, config.database, self)
         self.worldstate = Worldstate()
+        self.warframe_droptables = DropTables()
+        self.penguin_stats = PenguinStats(self.database)
         self.steam_api = Steam_API("http://api.steampowered.com", config.steam_api_key)
         self.newswire = Newswire()
         self.command_key = "\u0024"
@@ -39,17 +45,17 @@ class Bot(discord.Client):
             "moderation" :  ModerationCommands("Moderation", "This module has all the moderation commands related to the bot", self.command_key+"mod"),
             "role" :        RoleCommands("Role", "This module has all the role commands", self.command_key+"role", self, self.database),
             "math" :        MathCommands("Math", "This module has math commands", self.command_key+"math", self),
-            "warframe" :    WarframeCommands("Warframe", "Warframe module", self.command_key+"wf", self, self.database),
+            "warframe" :    WarframeCommands("Warframe", "Warframe module", self.command_key+"wf", self, self.database, self.warframe_droptables),
             "gfl" :         GFLCommands("Girls' Frontline", "GFL Module", self.command_key+"gfl", self, self.database),
             "steam" :       SteamCommands("Steam", "Steam Module", self.command_key+"steam", self, self.database, self.steam_api),
             "forever" :     ForeverCommands("Forever", "Main module of the bot", self.command_key+"fe", self, self.database, self.newswire),
             "nsfw" :        NSFWCommands("NSFW", "NSFW Module", self.command_key+"nsfw")
         }
-        self.basic_task = self.loop.create_task(self.basic_loop())
         self.server_sync_task = None
     async def basic_loop(self,):
         await self.wait_until_ready()
         await self.database.init_runtime()
+        await self.penguin_stats.parse()
         self.server_sync_task = self.loop.create_task(self.server_sync())
         while True:
             try:
@@ -86,10 +92,17 @@ class Bot(discord.Client):
                     j.voice.update_sounds()
             await asyncio.sleep(15)
     async def on_ready(self,):
-        print("Everythings ready")
+        self.aiosession = aiohttp.ClientSession()
+        self.newswire.session = self.aiosession
+        self.worldstate.session = self.aiosession
+        self.steam_api.session = self.aiosession
+        self.penguin_stats.session = self.aiosession
+
+        forever.Utilities.session = self.aiosession
+        
+        self.basic_task = self.loop.create_task(self.basic_loop())
         print(discord.__version__)
         print(await self.application_info())
-        
         
     async def on_guild_join(self, guild):
         #(self, server_id, discord_server, logchannel, updated_messages, notifications, joinable_roles, role_messages

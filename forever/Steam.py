@@ -90,6 +90,7 @@ class Complete_Account():
 class Steam_API():
     cache = Cache()
     def __init__(self, api_url, api_key):
+        self.session = None
         self.last_request_timestamp = 0
         self.lock = asyncio.Lock()
         self.api_url = api_url
@@ -105,8 +106,8 @@ class Steam_API():
                 await asyncio.sleep(1.1-tmp)
             params["key"] = self.api_key
             self.last_request_timestamp = time.time()
-            async with aiohttp.ClientSession() as sess:
-                async with sess.get(f"{self.api_url}/{endpoint}", params=params) as resp:
+            if self.session:
+                async with self.session.get(f"{self.api_url}/{endpoint}", params=params) as resp:
                     if resp.status == 200:
                         data = json.loads(await resp.text())
                         return data

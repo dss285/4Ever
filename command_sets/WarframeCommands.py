@@ -1,4 +1,5 @@
 import asyncio
+from forever.Database import DB_API
 import discord
 import time
 from models.EmbedTemplate import EmbedTemplate
@@ -8,10 +9,10 @@ from forever.Warframe import DropTables, CetusMessage, SortieMessage, FissureMes
 import re
 
 class WarframeCommands(Commands):
-    def __init__(self, module_name, description, command_key, client, database):
+    def __init__(self, module_name : str, description : str, command_key : str, client : discord.Client, database : DB_API, droptables : DropTables):
         self.database = database
         self.client = client
-        self.droptables = DropTables()
+        self.droptables = droptables
         command_list = self.fetch_commands(command_key)
         super().__init__(module_name, command_list, description, command_key)
 

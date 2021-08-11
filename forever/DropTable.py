@@ -50,7 +50,6 @@ class ProtocolAssimilationBanner():
     def set_names(self, names):
         self.names = names
         self.banner_counts()
-        print(self.pool.pool_count())
     def add(self, weight, amount):
         self.pool.add(weight, amount)
     def set_prioritize(self, prioritized_list):
