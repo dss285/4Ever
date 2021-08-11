@@ -3,11 +3,52 @@
 #   resurssi planner
 #   gacha simulaattori
 import random
+import json
 import time
 from typing import Any, Union
 class ResourcePlanner():
     def __init__(self) -> None:
         self.random = random.Random(time.time())
+class PenguinStats():
+    def __init__(self, database) -> None:
+        self.session = None
+        self.database = database
+        self.url = "https://penguin-stats.io/PenguinStats/api/v2/result/matrix?server=US"
+    async def get_data(self,):
+        if self.session:
+            async with self.session.get(self.url) as resp:
+                if resp.status == 200:
+                    data = json.loads(await resp.text())
+                    return data
+                else:
+                    return None
+        return None
+    async def parse(self,):
+        data = await self.get_data()
+        if data:
+            data = data["matrix"]
+            for i in data:
+                stageid = i["stageId"]
+                itemid = i["itemId"]
+                quantity = i["quantity"]
+                times = i["times"]
+
+                stage = self.database.runtime['arknights']['stages'].get(stageid)
+                item = self.database.runtime['arknights']['items'].get(itemid)
+                if stage and item:
+                    if stage.drops:
+                        for x in range(len(stage.drops)):
+                            if item == stage.drops[x]["item"]:
+                                stage.drops[x]["quantity"] = quantity
+                                stage.drops[x]["times"] = times
+                                break
+                    if item.stage_drop_list:
+                        for x in range(len(item.stage_drop_list)):
+                            if stage == item.stage_drop_list[x]["stage"]:
+                                item.stage_drop_list[x]["quantity"] = quantity
+                                item.stage_drop_list[x]["times"] = times
+                                break
+
 class Stage():
     def __init__(self, id : str, code : str, name : str, description : str, sanity_cost : int, drops : list[dict[str, Any]]) -> None:
         self.id = id
