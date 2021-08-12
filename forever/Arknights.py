@@ -58,6 +58,41 @@ class Stage():
         self.description = description
         self.sanity_cost = sanity_cost
         self.drops = drops
+    def drop_rate_per_item(self,):
+        results = []
+        if self.drops:
+            for i in self.drops:
+                if "quantity" in i and "times" in i:
+                    results.append((i['item'], i['quantity']/i['times']))
+        return results
+    def sanity_cost_per_item(self,):
+        drop_rates = self.drop_rate_per_item()
+        results = []
+        if drop_rates:
+            for i in drop_rates:
+                item, drop_rate = i
+                results.append((item, self.sanity_cost/drop_rate))
+        return results
+    def reach_probability(self, rate):
+        drop_rates = self.drop_rate_per_item()
+        results = []
+        if drop_rates:
+            for i in drop_rates:
+                item, drop_rate = i
+                drops = 1
+                reached_probability, trials = trials_to_reach_probability(drops, drop_rate, rate)
+                results.append((item, reached_probability, drop_rate, trials))
+        return results
+    def sanity_cost_per_item_probability(self, rate=0.9):
+        trials_per_item = self.reach_probability(rate)
+        results = []
+        for i in trials_per_item:
+            item, reached_probability, drop_rate, trials = i
+            if reached_probability >= 1:
+                results.append((item, self.sanity_cost/drop_rate))
+            else:
+                results.append((item, self.sanity_cost*reached_probability))
+        return results
     def __repr__(self):
         return f"<Arknights.Stage name={self.name} code={self.code} sanity_cost={self.sanity_cost}>"
 class Item():
@@ -76,35 +111,34 @@ class Item():
     def set_stage_drop_list(self, stage_drop_list : list[dict[str, Any]]):
         self.stage_drop_list = stage_drop_list
     def drop_rate_per_stage(self,):
+        results = []
         if self.stage_drop_list:
-            rates = []
             for i in self.stage_drop_list:
                 if "quantity" in i and "times" in i:
-                    rates.append((i['stage'], i['quantity']/i['times']))
-            return rates
-        return None
-    def trials_for_one_item(self,):
+                    results.append((i['stage'], i['quantity']/i['times']))
+        return results
+    def sanity_cost_per_stage(self,):
         drop_rates = self.drop_rate_per_stage()
+        results = []
         if drop_rates:
-            results = []
             for i in drop_rates:
                 stage, drop_rate = i
                 results.append((stage, stage.sanity_cost/drop_rate))
-            return results
-    def reach_probability(self, rate=0.63):
+        return results
+    def reach_probability(self, rate):
         drop_rates = self.drop_rate_per_stage()
+        results = []
         if drop_rates:
-            results = []
             for i in drop_rates:
                 stage, drop_rate = i
                 drops = 1
                 reached_probability, trials = trials_to_reach_probability(drops, drop_rate, rate)
                 results.append((stage, reached_probability, drop_rate, trials))
-            return results
-    def sanity_per_item(self,):
-        trials_per_item = self.trials_for_one_item()
+        return results
+    def sanity_cost_per_stage_probability(self, rate=0.9):
+        trials_per_stage = self.reach_probability(rate)
         results = []
-        for i in trials_per_item:
+        for i in trials_per_stage:
             stage, reached_probability, drop_rate, trials = i
             if reached_probability >= 1:
                 results.append((stage, stage.sanity_cost/drop_rate))
@@ -112,7 +146,8 @@ class Item():
                 results.append((stage,reached_probability*stage.sanity_cost))
 
         return results
-
+    def __repr__(self) -> str:
+        return f"<Arknights.Item name={self.name} id={self.id} rarity={self.rarity}>"
 class Formula():
     def __init__(self, id : str, item : Any, count : int, costs : list[dict[str, Union[Any, int]]], room : str) -> None:
         self.id = id

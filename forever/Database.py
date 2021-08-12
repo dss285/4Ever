@@ -93,6 +93,8 @@ class DB_API(Database):
 		self.saved_messages = set()
 		self.mentions = []
 		self.init_done = False
+	def __getitem__(self, item):
+		return self.runtime.get[item]
 	def structure(self,) -> None:
 		self.runtime["warframe"] = {}
 		self.runtime["warframe"]["nightwave"] = []
