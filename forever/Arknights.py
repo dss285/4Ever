@@ -5,6 +5,7 @@
 import random
 import json
 import time
+from forever.Math import trials_to_reach_probability
 from typing import Any, Union
 class ResourcePlanner():
     def __init__(self) -> None:
@@ -57,6 +58,8 @@ class Stage():
         self.description = description
         self.sanity_cost = sanity_cost
         self.drops = drops
+    def __repr__(self):
+        return f"<Arknights.Stage name={self.name} code={self.code} sanity_cost={self.sanity_cost}>"
 class Item():
     def __init__(self, id : str, name : str, description : str, rarity : int, icon_id : str, usage : str, stage_drop_list : list[dict[str, Any]]=None, formula : Any=None) -> None:
         self.id = id
@@ -72,6 +75,44 @@ class Item():
         self.formula = formula
     def set_stage_drop_list(self, stage_drop_list : list[dict[str, Any]]):
         self.stage_drop_list = stage_drop_list
+    def drop_rate_per_stage(self,):
+        if self.stage_drop_list:
+            rates = []
+            for i in self.stage_drop_list:
+                if "quantity" in i and "times" in i:
+                    rates.append((i['stage'], i['quantity']/i['times']))
+            return rates
+        return None
+    def trials_for_one_item(self,):
+        drop_rates = self.drop_rate_per_stage()
+        if drop_rates:
+            results = []
+            for i in drop_rates:
+                stage, drop_rate = i
+                results.append((stage, stage.sanity_cost/drop_rate))
+            return results
+    def reach_probability(self, rate=0.63):
+        drop_rates = self.drop_rate_per_stage()
+        if drop_rates:
+            results = []
+            for i in drop_rates:
+                stage, drop_rate = i
+                drops = 1
+                reached_probability, trials = trials_to_reach_probability(drops, drop_rate, rate)
+                results.append((stage, reached_probability, drop_rate, trials))
+            return results
+    def sanity_per_item(self,):
+        trials_per_item = self.trials_for_one_item()
+        results = []
+        for i in trials_per_item:
+            stage, reached_probability, drop_rate, trials = i
+            if reached_probability >= 1:
+                results.append((stage, stage.sanity_cost/drop_rate))
+            else:
+                results.append((stage,reached_probability*stage.sanity_cost))
+
+        return results
+
 class Formula():
     def __init__(self, id : str, item : Any, count : int, costs : list[dict[str, Union[Any, int]]], room : str) -> None:
         self.id = id

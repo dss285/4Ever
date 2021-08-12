@@ -45,7 +45,7 @@ class Probability(Command):
                     em.add_field(name="Trials", value=f"{trials}")
                     em.add_field(name="Successes", value=f"{successes}")
                     em.add_field(name="Chance", value=f"{chance}")
-                    em.add_field(name="Probability", value=f"{Math.probability(trials, successes, chance)}")
+                    em.add_field(name="Probability", value=f"{Math.exact_probability(trials, successes, chance)}")
                     await message.channel.send(embed=em)
         except asyncio.TimeoutError:
             await message.channel.send(embed=EmbedTemplate(title="Probability", description="Timed out"))

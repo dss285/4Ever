@@ -37,7 +37,7 @@ def commonOnotations():
 	plt.grid(True)
 	plt.legend()
 	plt.savefig('onotation.png')
-def probability(trials : int, successes : int, chance : float) -> float:
+def exact_probability(trials : int, successes : int, chance : float) -> float:
 	coeff = coefficient(trials, successes)
 	pow_probability = chance**successes
 	pow_probability_2 = (1-chance)**(trials-successes)
@@ -51,6 +51,21 @@ def coefficient(trials : int, successes : int) -> float:
 		res = res * (trials - i) 
 		res = res / (i + 1) 
 	return res
+def atleast_number_of_success_probability(trials, successes, chance):
+	complementary = 0
+	for i in range(successes):
+		complementary += exact_probability(trials, i, chance)
+	return 1-complementary
+def trials_to_reach_probability(successes : int, chance : float, desired_probability : float):
+	finished = False
+	trials = successes
+	while not finished:
+		calculate_probability = atleast_number_of_success_probability(trials, successes, chance)
+		if calculate_probability >= desired_probability:
+			finished = True
+			return calculate_probability, trials
+		else:
+			trials += 1
 def pythagoras(a=None, b=None, c=None) -> float:
 	#c = a + b
 	#b = c - a
