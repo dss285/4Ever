@@ -20,7 +20,8 @@ async def booruAPI(keywords, url, api) -> discord.Embed:
             if key not in cache:
                 cache.add(key, posts)
     try:
-        post = random.choice(cache.get(key))
+        tmp = cache.get(key)["function"]
+        post = random.choice(tmp)
         return construct_embed(post['img'], post['tags'], keywords)
     except IndexError:
         return EmbedTemplate(title='No results!', description='No results for keywords found')

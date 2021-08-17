@@ -86,10 +86,8 @@ async def fetch_url(url, params={}):
                 return await resp.text()
             else:
                 return None
-
 def ts2ifmodifiedsince(timestamp):
     return time.strftime("%a, %d %b %Y %H:%M%S GMT", time.gmtime(timestamp))
-
 def is_number(m):
     try:
         float(m)
@@ -102,6 +100,19 @@ def is_int(m):
         return True
     except ValueError:
         return False
+def dict_search(dictionary, searched_key):
+    if not isinstance(dictionary, dict):
+        raise Exception("Not a dictionary")
+    if searched_key in dictionary:
+        return searched_key
+    results = []
+    for i in dictionary:
+        if i.lower().startswith(searched_key.lower()):
+            results.append(i)
+    if results and len(results) == 1:
+        return results[0]
+    return results
+    
 def log(messages, file="log.txt"):
     if isinstance(messages, str):
         messages = [messages]

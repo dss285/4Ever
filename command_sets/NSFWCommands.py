@@ -41,7 +41,7 @@ class Rule34(Command):
         self.args = Args(tags=Args.ANY_ARG)
         self.args.set_pattern(command_key, self.aliases)
     async def run(self, message, server):
-        parse = self.parse(message.content)
+        parse = self.args.parse(message.content)
         if parse:
             em = await NSFW.rule34XXX(parse["tags"])
             await message.channel.send(embed=em)    
@@ -51,7 +51,7 @@ class Realbooru(Command):
         self.args = Args(tags=Args.ANY_ARG)
         self.args.set_pattern(command_key, self.aliases)
     async def run(self, message, server):
-        parse = self.parse(message.content)
+        parse = self.args.parse(message.content)
         if parse:
             em = await NSFW.realbooru(parse["tags"])
             await message.channel.send(embed=em)   
@@ -61,7 +61,7 @@ class Safebooru(Command):
         self.args = Args(tags=Args.ANY_ARG)
         self.args.set_pattern(command_key, self.aliases)
     async def run(self, message, server):
-        parse = self.parse(message.content)
+        parse = self.args.parse(message.content)
         if parse:
             em = await NSFW.safebooru(parse["tags"])
             await message.channel.send(embed=em)   
@@ -71,7 +71,7 @@ class Gelbooru(Command):
         self.args = Args(tags=Args.ANY_ARG)
         self.args.set_pattern(command_key, self.aliases)
     async def run(self, message, server):
-        parse = self.parse(message.content)
+        parse = self.args.parse(message.content)
         if parse:
             em = await NSFW.gelbooru(parse["tags"])
             await message.channel.send(embed=em)   
@@ -81,7 +81,7 @@ class Danbooru(Command):
         self.args = Args(tags=Args.ANY_ARG)
         self.args.set_pattern(command_key, self.aliases)
     async def run(self, message, server):
-        parse = self.parse(message.content)
+        parse = self.args.parse(message.content)
         if parse:
             em = await NSFW.danbooru(parse["tags"])
             await message.channel.send(embed=em)

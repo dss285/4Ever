@@ -94,7 +94,7 @@ class DB_API(Database):
 		self.mentions = []
 		self.init_done = False
 	def __getitem__(self, item):
-		return self.runtime.get[item]
+		return self.runtime[item]
 	def structure(self,) -> None:
 		self.runtime["warframe"] = {}
 		self.runtime["warframe"]["nightwave"] = []
@@ -112,6 +112,10 @@ class DB_API(Database):
 		self.runtime["arknights"]["formulas"] = {}
 		self.runtime["arknights"]["items"] = {}
 		self.runtime["arknights"]["stages"] = {}
+		self.runtime["arknights"]["items"]["ids"] = {}
+		self.runtime["arknights"]["items"]["names"] = {}
+		self.runtime["arknights"]["stages"]["ids"] = {}
+		self.runtime["arknights"]["stages"]["codes"] = {}
 		self.runtime["gfl"] = {}
 		self.runtime["gfl"]["dolls"] = {}
 		self.runtime["gfl"]["dolls"]["aliases"] = {}
@@ -209,7 +213,8 @@ class DB_API(Database):
 		for i in items:
 			tmp = Item(i["id"], i["name"], i["description"], i["rarity"], i["icon_id"], i["usage"])
 			tmp._stage_drop_list_str = i["stage_drop_list"]
-			self.runtime["arknights"]["items"][i["id"]] = tmp
+			self.runtime["arknights"]["items"]["ids"][i["id"]] = tmp
+			self.runtime["arknights"]["items"]["names"][tmp.name] = tmp
 		for f in formulas:
 			costs = []
 			if f["costs"] != "":
@@ -219,11 +224,11 @@ class DB_API(Database):
 					item_id = splitted[0]
 					amount = splitted[1]
 					costs.append({
-						"item" : self.runtime["arknights"]["items"][item_id],
+						"item" : self.runtime["arknights"]["items"]["ids"][item_id],
 						"amount" : amount
 					})
-			tmp = Formula(f["id"], self.runtime["arknights"]["items"][f["item_id"]], f["count"], costs, f["room"])
-			self.runtime["arknights"]["items"][f["item_id"]].set_formula(tmp)
+			tmp = Formula(f["id"], self.runtime["arknights"]["items"]["ids"][f["item_id"]], f["count"], costs, f["room"])
+			self.runtime["arknights"]["items"]["ids"][f["item_id"]].set_formula(tmp)
 			self.runtime["arknights"]["formulas"][f"{f['id']}_{f['room']}"] = tmp
 		for s in stages:
 			drops = []
@@ -243,8 +248,9 @@ class DB_API(Database):
 						"occurence" : occurence
 					})
 			sta = Stage(s["id"], s["code"], s["name"], s["description"], s["sanity_cost"], drops)
-			self.runtime["arknights"]["stages"][s["id"]] = sta
-		for itemid, item in self.runtime["arknights"]["items"].items():
+			self.runtime["arknights"]["stages"]["ids"][s["id"]] = sta
+			self.runtime["arknights"]["stages"]["codes"][sta.code] = sta
+		for itemid, item in self.runtime["arknights"]["items"]["ids"].items():
 			stage_drop_list = []
 			if item._stage_drop_list_str not in ["", "-"]:
 				tmp = item._stage_drop_list_str.split(" ")
@@ -252,7 +258,7 @@ class DB_API(Database):
 					splitted = i.split("|")
 					stageid = splitted[0]
 					occurence = splitted[1]
-					stage = self.runtime["arknights"]["stages"][stageid]
+					stage = self.runtime["arknights"]["stages"]["ids"][stageid]
 					stage_drop_list.append({
 						"stage" : stage,
 						"occurence" : occurence

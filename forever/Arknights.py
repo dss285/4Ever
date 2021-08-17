@@ -5,6 +5,9 @@
 import random
 import json
 import time
+
+import discord
+from models.EmbedTemplate import EmbedTemplate
 from forever.Math import trials_to_reach_probability
 from typing import Any, Union
 class ResourcePlanner():
@@ -34,8 +37,8 @@ class PenguinStats():
                 quantity = i["quantity"]
                 times = i["times"]
 
-                stage = self.database.runtime['arknights']['stages'].get(stageid)
-                item = self.database.runtime['arknights']['items'].get(itemid)
+                stage = self.database.runtime['arknights']['stages']["ids"].get(stageid)
+                item = self.database.runtime['arknights']['items']["ids"].get(itemid)
                 if stage and item:
                     if stage.drops:
                         for x in range(len(stage.drops)):
@@ -123,7 +126,7 @@ class Item():
         if drop_rates:
             for i in drop_rates:
                 stage, drop_rate = i
-                results.append((stage, stage.sanity_cost/drop_rate))
+                results.append((stage, stage.sanity_cost/drop_rate, drop_rate))
         return results
     def reach_probability(self, rate):
         drop_rates = self.drop_rate_per_stage()
@@ -148,6 +151,17 @@ class Item():
         return results
     def __repr__(self) -> str:
         return f"<Arknights.Item name={self.name} id={self.id} rarity={self.rarity}>"
+    def get_embed(self,) -> discord.Embed:
+        em = EmbedTemplate(title=self.name.title(), description=f"{self.description}\n\n{self.usage}")
+        if self.stage_drop_list:
+            sanity_costs = self.sanity_cost_per_stage()
+            if sanity_costs:
+                tmp = ""
+                for i in sanity_costs:
+                    stage, sanity_per_item, drop_rate = i
+                    tmp += f"{stage.code} {sanity_per_item:.2f} Sanity/Item {drop_rate*100:.2f}%\n"
+                em.add_field(name="Drop Rates", value=tmp)
+        return em
 class Formula():
     def __init__(self, id : str, item : Any, count : int, costs : list[dict[str, Union[Any, int]]], room : str) -> None:
         self.id = id

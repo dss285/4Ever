@@ -27,6 +27,7 @@ from command_sets.NSFWCommands import NSFWCommands
 from command_sets.RoleCommands import RoleCommands
 from command_sets.BotAdminCommands import BotAdminCommands
 from command_sets.SteamCommands import SteamCommands
+from command_sets.ArknightsCommands import  ArknightsCommands
 
 class Bot(discord.Client):
     def __init__(self, *args, **kwargs):
@@ -47,6 +48,7 @@ class Bot(discord.Client):
             "math" :        MathCommands("Math", "This module has math commands", self.command_key+"math", self),
             "warframe" :    WarframeCommands("Warframe", "Warframe module", self.command_key+"wf", self, self.database, self.warframe_droptables),
             "gfl" :         GFLCommands("Girls' Frontline", "GFL Module", self.command_key+"gfl", self, self.database),
+            "arknights" :   ArknightsCommands("Arknights", "AK Module", self.command_key+"ak", self, self.database),
             "steam" :       SteamCommands("Steam", "Steam Module", self.command_key+"steam", self, self.database, self.steam_api),
             "forever" :     ForeverCommands("Forever", "Main module of the bot", self.command_key+"fe", self, self.database, self.newswire),
             "nsfw" :        NSFWCommands("NSFW", "NSFW Module", self.command_key+"nsfw")
@@ -69,8 +71,6 @@ class Bot(discord.Client):
                 for i in self.database.runtime["servers"].values():
                     self.loop.create_task(i.updateMessages(data, self.database))
             except Exception as e:
-                
-                print("Error, logged")
                 log([f"[BASE LOOP][{time.time()}] {e}", traceback.format_exc()+"\r\n"])
 
             await asyncio.sleep(120)

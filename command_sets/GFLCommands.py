@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any
+from typing import Any, Union
 import discord
 import re
 import datetime
@@ -9,7 +9,7 @@ from models.Commands import Commands, Command
 from models.Server import Server
 from forever.Database import DB_API
 from forever.GFL import Doll, ProtocolAssimilationBanner, Banners
-from forever.Utilities import Args
+from forever.Utilities import Args, dict_search
 #fairylle komennot, dolleille jonkinlainen haku
 
 class GFLCommands(Commands):
@@ -51,22 +51,68 @@ class DollInfo(Command):
         super().__init__(command_key, "doll", """Info of dolls""", f"{command_key} doll", ["d", "tdoll"])
         self.args = Args(doll=Args.ANY_ARG)
         self.args.set_pattern(command_key, self.aliases)
-    def find_doll(self, parse : str) -> Doll:
-        if parse['doll'].lower() in self.database.runtime["gfl"]["dolls"]["names"]:
-            return self.database.runtime["gfl"]["dolls"]["names"].get(parse['doll'].lower())
-        elif parse['doll'].lower() in self.database.runtime["gfl"]["dolls"]["aliases"]:
-            return self.database.runtime["gfl"]["dolls"]["aliases"].get(parse['doll'].lower())
+    def find_doll(self, parse : str) -> Union[Doll, list[str]]:
+        aliases = dict_search(self.database["gfl"]["dolls"]["aliases"], parse['doll'])
+        names = dict_search(self.database["gfl"]["dolls"]["names"], parse['doll'])
+        if aliases and names:
+            if isinstance(aliases, list) and isinstance(names, list):
+                return aliases+names
+            elif isinstance(aliases, list) and isinstance(names, str):
+                aliases.append(names)
+                return aliases
+            elif isinstance(aliases, str) and isinstance(names, list):
+                names.append(aliases)
+                return names
+            elif isinstance(aliases, str) and isinstance(names, str):
+                return [names, aliases]
+        elif aliases:
+            if isinstance(aliases, str):
+                return self.database.runtime["gfl"]["dolls"]["aliases"][aliases]
+            elif isinstance(aliases, list):
+                return aliases
+        elif names:
+            if isinstance(names, str):
+                return self.database["gfl"]["dolls"]["names"][names]
+            elif isinstance(names, list):
+                return names
+
         else:
-            return None
+            return []
+        # if parse['doll'].lower() in self.database.runtime["gfl"]["dolls"]["names"]:
+        #     return self.database.runtime["gfl"]["dolls"]["names"].get(parse['doll'].lower())
+        # elif parse['doll'].lower() in self.database.runtime["gfl"]["dolls"]["aliases"]:
+        #     return self.database.runtime["gfl"]["dolls"]["aliases"].get(parse['doll'].lower())
+        # else:
+        #     return None
     async def run(self, message : discord.Message, server : Server) -> None:
         parse = self.args.parse(message.content)
         if parse:
             doll = self.find_doll(parse)
             if doll:
-                em = doll.get_embed()
-                image = discord.File(doll.get_image_path(), filename="doll.png")
-                em.set_image(url="attachment://doll.png")
-                await message.channel.send(file=image, embed=em)
+                if isinstance(doll, Doll):
+                    em = doll.get_embed()
+                    image = discord.File(doll.get_image_path(), filename="doll.png")
+                    em.set_image(url="attachment://doll.png")
+                    await message.channel.send(file=image, embed=em)
+                elif isinstance(doll, list):
+                    em = EmbedTemplate(title="Did you mean?", description="\n".join([f"{i}. {doll[i-1]}" for i in range(1, len(doll)+1)]))
+                    await message.channel.send(embed=em)
+                    msg = await self.client.wait_for('message', check=lambda x: x.author == message.author, timeout=30)
+                    if msg:
+                        if msg.content.isdigit():
+                            tmp = int(msg.content)
+                            if 1 <= tmp <= len(doll):
+                                chosen_doll = doll[tmp-1]
+                                if chosen_doll in self.database["gfl"]["dolls"]["names"]:
+                                    chosen_doll = self.database["gfl"]["dolls"]["names"].get(chosen_doll)
+                                elif chosen_doll in self.database["gfl"]["dolls"]["aliases"]:
+                                    chosen_doll = self.database["gfl"]["dolls"]["aliases"].get(chosen_doll)
+                                if isinstance(chosen_doll, Doll):
+                                    em = chosen_doll.get_embed()
+                                    image = discord.File(chosen_doll.get_image_path(), filename="doll.png")
+                                    em.set_image(url="attachment://doll.png")
+                                    await message.channel.send(file=image, embed=em)
+                        
             else:
                 em = EmbedTemplate(title="Not found", description="Doll wasn't found in the database, if you think this is an error, contact bot owner.")
                 await message.channel.send(embed=em)
